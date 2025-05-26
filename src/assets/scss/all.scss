@@ -1,13 +1,9 @@
-@import '../../../node_modules/bootstrap/scss/functions';
-
+@import "../../../node_modules/bootstrap/scss/functions";
 @import './utils/variables';
-@import '../../../node_modules/bootstrap';
+@import "../../../node_modules/bootstrap";
 @import './utils/utilities';
 
-@import './components/button';
+@import "bootstrap/scss/utilities/api";
 
-$utilities: map-merge($utilities,
-        ("font-size": (responsive: true,
-                property: font-size,
-                class: fs,
-                values: $font-sizes )));
+@import './base/base';
+@import './components/button.scss'

@@ -5,7 +5,11 @@ import Calendar from 'react-calendar';
 import axios from 'axios'
 import Input from './assets/pages/components/Input';
 import AlertModal from './assets/pages/components/AlertModal';
+import Navbar from './assets/pages/layout/Navbar';
 import { Modal } from "bootstrap";
+import Toast from './assets/pages/layout/Toast'
+import { useDispatch } from 'react-redux';
+import { createAsyncMessage } from './assets/redux/slice/toastSlice';
 
 import 'react-calendar/dist/Calendar.css';
 import 'swiper/css';
@@ -24,8 +28,7 @@ function App() {
   const [selectedDate, setSelectedDate] = useState(new Date())
   const modalRef = useRef(null);
   const alertRef = useRef(null);
-
-
+  const dispatch = useDispatch();
 
   const roomNameList = ["7樓會議室", "601餐廳", "603教室", "503教室", "505會議室", "506圖書室",
     "507音樂教室", "402母子室", "406禱告室", "407禱告室", "三樓大堂", "205地板教室",
@@ -37,7 +40,7 @@ function App() {
     "603教室": "col-4",
     "503教室": "col-2",
     "505會議室": "col-4",
-    "402母子室": "col-md-6",
+    "402母子室": "col-6",
     "三樓大堂": "col-12",
     "206教室": "col-2",
     "204教室": "col-2",
@@ -54,7 +57,6 @@ function App() {
     register,
     handleSubmit,
     reset,
-    watch,
     formState: { errors },
   } = useForm({ mode: 'onTouched' })
 
@@ -88,7 +90,14 @@ function App() {
       setSelectRoom('');
       setSelectedDate(new Date())
     } catch (error) {
-      console.log(error)
+      const { message } = error.response.data;
+      dispatch(
+        createAsyncMessage({
+          text: message,
+          type: '場地登記失敗',
+          status: 'failed',
+        })
+      );
     }
   }
 
@@ -108,8 +117,22 @@ function App() {
         bookedMap[date][location].push(...times);
       })
       setBookingList(bookedMap);
+      dispatch(
+        createAsyncMessage({
+          text: res.status,
+          type: '成功取得場地登記資料',
+          status: 'success',
+        })
+      );
     } catch (error) {
-      console.log(error)
+      const { message } = error.response.data;
+      dispatch(
+        createAsyncMessage({
+          text: message,
+          type: '取得場地登記資料失敗',
+          status: 'failed',
+        })
+      );
     }
   }
 
@@ -118,8 +141,23 @@ function App() {
     try {
       const res = await axios.get(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/room`)
       setRoomList(res.data.documents)
+      console.log(res)
+      dispatch(
+        createAsyncMessage({
+          text: res.status,
+          type: '取得場地資料成功',
+          status: 'success',
+        })
+      );
     } catch (error) {
-      console.log(error)
+      const { message } = error.response.data;
+      dispatch(
+        createAsyncMessage({
+          text: message,
+          type: '取得場地資料失敗',
+          status: 'failed',
+        })
+      );
     }
   }
 
@@ -231,17 +269,11 @@ function App() {
 
   return (
     <div className="bg-primary-50">
-      <nav className="d-flex justify-content-between align-items-center py-4 text-primary">
-        <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-          <h1 className="ms-3 ms-md-4 mb-0">七賢路禮拜堂</h1>
-          <span className="fs-3 fs-md-1">【聚會場地登記】</span>
-        </div>
-        <span className="material-symbols-outlined me-4" style={{ fontSize: "32px" }}>account_circle</span>
-      </nav>
+      <Navbar />
       <div className="container pb-8">
         <form onSubmit={handleSubmit(onSubmit)}>
           {/* 時間 */}
-          <section className="border-bottom border-primary py-6">
+          <section className="border-bottom border-primary py-md-6 py-0">
             <h3 className="mt-4 mb-4"><small className="text-danger">*</small>請選擇時間</h3>
             <div className="row g-4">
               <div className="col-md-6 d-flex justify-content-center">
@@ -287,13 +319,13 @@ function App() {
             </div>
           </section>
           {/* 場地 */}
-          <section className="border-bottom border-primary py-6">
+          <section className="border-bottom border-primary py-md-6 py-0">
             <div className="d-flex mt-4 mb-4">
               <h3><small className="text-danger">*</small>請選擇場地</h3>
               <button type="button" className="btn btn-primary mb-3 me-3 ms-auto text-nowrap py-2 px-4" onClick={seeAll}>看全部</button>
             </div>
-            <div className="row g-5">
-              <div className="col-md-6">
+            <div className="row g-0 g-md-5">
+              <div className="col-md-6 mb-5">
                 <div className="row g-2 g-lg-3">
                   {roomNameList.map((roomName) => {
                     const dateBookings = bookingList[dateString];
@@ -307,7 +339,7 @@ function App() {
                       <div className={roomColMap[roomName] || "col-3"} key={roomName}>
                         <button
                           type="button"
-                          className={`btn room-btn px-0 px-md-2 py-2 ${selectRoom === roomName ? "active" : ""}`}
+                          className={`btn room-btn px-0 px-md-2 py-2 fs-7 fs-md-6 ${selectRoom === roomName ? "active" : ""}`}
                           onClick={() => selectItem(roomName)}
                           value="roomName"
                           disabled={hasConflict}>{roomName}</button>
@@ -320,10 +352,13 @@ function App() {
                 <div className="d-md-none">
                   <Swiper
                     slidesPerView={4.5}
-                    className="nav nav-pills">
+                    className="nav nav-pills"
+                    spaceBetween={10}
+                    style={{ paddingLeft: 0, paddingRight: 0 }}
+                  >
                     {tags.map((tag) => {
                       return (
-                        <SwiperSlide className="nav-item" key={tag}>
+                        <SwiperSlide key={tag}>
                           <button type="button" className="btn btn-primary-300 text-white mb-4 fs-7" onClick={() => setSelectTag(tag)}>{tag}</button>
                         </SwiperSlide>
                       )
@@ -347,18 +382,18 @@ function App() {
                     tagFilterRooms.filter(filterRoom).map((room) => {
                       const isSelected = selectRoom === room.fields?.title?.stringValue;
                       return (
-                        <div key={room.name} className={`btn border border-primary rounded-4 py-3 px-4 mb-3 ${isSelected && "bg-primary-100 border-primary-300 text-primary-300"}`} onClick={() => selectItem(room.fields?.title?.stringValue)}>
+                        <div key={room.name} className={`btn border border-primary rounded-4 py-3 px-4 mb-3 ${isSelected && "bg-primary-200 text-primary"}`} onClick={() => selectItem(room.fields?.title?.stringValue)}>
                           <div className="d-flex w-100 justify-content-between align-items-start mb-2">
                             <h5 className="mb-1">{room.fields?.title?.stringValue}</h5>
-                            <p className="mb-1 w-50 text-start">建議人數：{room.fields.number.stringValue}</p>
+                            <p className="mb-1 w-50 text-start ">建議人數：{room.fields.number.stringValue}</p>
                           </div>
-                          <div className="d-flex">
+                          <div className="d-flex flex-wrap">
                             {room.fields?.tag?.arrayValue?.values
                               ?.filter(tag => tag.stringValue?.trim())
                               .map(tag => (
                                 <button
                                   type="button"
-                                  className="btn rounded rounded-pill btn-primary-300 text-white fs-7 me-2 py-1"
+                                  className="btn rounded rounded-pill btn-primary-300 text-white fs-7 me-2 py-1 text-nowrap mb-2"
                                   key={tag.stringValue}>
                                   {tag.stringValue}
                                 </button>
@@ -501,6 +536,7 @@ function App() {
         </form>
       </div>
       <AlertModal alertRef={alertRef} modalRef={modalRef} />
+      <Toast />
     </div>
   )
 }
