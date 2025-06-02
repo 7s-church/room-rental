@@ -19,7 +19,7 @@ function Navbar({isAdminPage}) {
             <div className="d-flex align-items-center">
                 {isAdminPage ? (
                     <p className="me-md-4 me-2 mb-0">歡迎來到管理頁面</p>) : (<button type="button" className="btn btn-outline-primary me-md-4 me-2" onClick={openRef}>長期借用表單</button>)}
-                <Link to='/admin'>
+                <Link to='/adminlogin'>
                     <button type="button" data-bs-toggle="tooltip" data-bs-placement="管理者登入" className="btn">
                         <span className="material-symbols-outlined me-md-4 me-2 align-middle" style={{ fontSize: "32px" }}>account_circle</span>
                     </button>

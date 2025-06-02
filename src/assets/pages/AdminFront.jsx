@@ -15,7 +15,6 @@ function AdminFront() {
     const getBookingList = async (data) => {
         try {
             const res = await axios.get("https://us-central1-fir-room-rental.cloudfunctions.net/api/getBookings", data)
-            console.log(res.data)
             const mapEvents = res.data.map((booking) => {
                 const [year, month, day] = booking.date.split('-').map(Number);
                 const [startHour, startMinute] = booking.times[0].split(':').map(Number);

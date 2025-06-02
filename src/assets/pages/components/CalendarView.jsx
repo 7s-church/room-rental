@@ -62,7 +62,6 @@ function CalendarView({ events, onDataChange }) {
         modalRef.current.show();
     };
 
-    console.log(selectedEvent)
     const CustomEvent = ({ event }) => (
         <span>
             <strong>{event.title}</strong>
