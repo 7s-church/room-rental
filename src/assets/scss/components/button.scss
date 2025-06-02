@@ -6,7 +6,12 @@
 
     &.active,
     &:hover {
-        background-color: $primary-200;
+        background-color: $primary-75;
+        border: 1px solid $primary;
         color: $primary;
     }
+}
+
+.rbc-allday-cell {
+    display: none
 }

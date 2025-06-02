@@ -114,6 +114,22 @@ function LongTurnModal({ modalRef }) {
                                         <Input
                                             register={register}
                                             errors={errors}
+                                            id="location"
+                                            type="text"
+                                            labelText="場地"
+                                            mark="*"
+                                            rules={{
+                                                required: {
+                                                    value: true,
+                                                    message: '借用場地為必填',
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="col-md-6">
+                                        <Input
+                                            register={register}
+                                            errors={errors}
                                             id="group"
                                             type="text"
                                             labelText="借用單位"

@@ -300,6 +300,7 @@ $cyans: (
 // scss-docs-start theme-color-variables
 $primary:       #4D0000; //$blue !default; custom
 $primary-50:    #FDFBF6; //custom
+$primary-75:    #ffebc4;//custom
 $primary-100:   #FFFF99; //custom
 $primary-200:   #FCBA63; //custom
 $primary-300:   #D96600; //custom
@@ -317,6 +318,7 @@ $dark:          $gray-900 !default;
 $theme-colors: (
   "primary":    $primary,
   "primary-50": $primary-50,//custom
+  "primary-75":  $primary-75,//custom
   "primary-100": $primary-100,//custom
   "primary-200": $primary-200,//custom
   "primary-300": $primary-300,//custom

@@ -1,21 +1,22 @@
 import { useEffect, useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { Swiper, SwiperSlide } from 'swiper/react';
+import { createAsyncMessage } from './assets/redux/slice/toastSlice';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { Modal } from "bootstrap";
 import Calendar from 'react-calendar';
 import axios from 'axios'
 import Input from './assets/pages/components/Input';
 import AlertModal from './assets/pages/components/AlertModal';
 import Navbar from './assets/pages/layout/Navbar';
-import { Modal } from "bootstrap";
 import Toast from './assets/pages/layout/Toast'
-import { useDispatch } from 'react-redux';
-import { createAsyncMessage } from './assets/redux/slice/toastSlice';
+import ScreenLoading from './assets/pages/components/ScreenLoading';
 
 import 'react-calendar/dist/Calendar.css';
 import 'swiper/css';
 
 const projectId = "fir-room-rental";
-
 
 
 function App() {
@@ -26,9 +27,11 @@ function App() {
   const [startTime, setStartTime] = useState(null);
   const [endTime, setEndTime] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date())
+  const [isScreenLoading, setIsScreenLoading] = useState(false)
   const modalRef = useRef(null);
   const alertRef = useRef(null);
   const dispatch = useDispatch();
+  const navigate = useNavigate()
 
   const roomNameList = ["7樓會議室", "601餐廳", "603教室", "503教室", "505會議室", "506圖書室",
     "507音樂教室", "402母子室", "406禱告室", "407禱告室", "三樓大堂", "205地板教室",
@@ -51,7 +54,7 @@ function App() {
     "舊101室": "col-2"
   };
 
-  const times = ["8:00", "8:30", "9:00", "9:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00"]
+  const times = ["08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00"]
 
   const {
     register,
@@ -78,9 +81,11 @@ function App() {
       location: selectRoom
     }
     bookRoom(submitDetal)
+
   })
 
   const bookRoom = async (data) => {
+    setIsScreenLoading(true)
     try {
       await axios.post("https://us-central1-fir-room-rental.cloudfunctions.net/api/addBooking", data)
       reset();
@@ -89,6 +94,7 @@ function App() {
       setEndTime(null);
       setSelectRoom('');
       setSelectedDate(new Date())
+      navigate('/successed')
     } catch (error) {
       const { message } = error.response.data;
       dispatch(
@@ -98,6 +104,8 @@ function App() {
           status: 'failed',
         })
       );
+    } finally {
+      setIsScreenLoading(false)
     }
   }
 
@@ -119,8 +127,8 @@ function App() {
       setBookingList(bookedMap);
       dispatch(
         createAsyncMessage({
-          text: res.status,
-          type: '成功取得場地登記資料',
+          text: '取得場地登記資料',
+          type: '成功',
           status: 'success',
         })
       );
@@ -141,11 +149,10 @@ function App() {
     try {
       const res = await axios.get(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/room`)
       setRoomList(res.data.documents)
-      console.log(res)
       dispatch(
         createAsyncMessage({
-          text: res.status,
-          type: '取得場地資料成功',
+          text: '取得場地資料',
+          type: '成功',
           status: 'success',
         })
       );
@@ -259,12 +266,7 @@ function App() {
   const dateString = formatDate(selectedDate)
   const weekdayString = selectedDate.toLocaleDateString('zh-TW', { weekday: 'long' });
 
-  const timeToMinutes = (timeStr) => {
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    return hours * 60 + minutes;
-  };
-
-  const filteredTimes = weekdayString === '星期日' ? times.filter((time) => timeToMinutes(time) <= timeToMinutes("17:00"))
+  const filteredTimes = weekdayString === '星期日' ? times.filter((time) => time <= "17:00")
     : times;
 
   return (
@@ -382,7 +384,7 @@ function App() {
                     tagFilterRooms.filter(filterRoom).map((room) => {
                       const isSelected = selectRoom === room.fields?.title?.stringValue;
                       return (
-                        <div key={room.name} className={`btn border border-primary rounded-4 py-3 px-4 mb-3 ${isSelected && "bg-primary-200 text-primary"}`} onClick={() => selectItem(room.fields?.title?.stringValue)}>
+                        <div key={room.name} className={`btn border border-primary rounded-4 py-3 px-4 mb-3 ${isSelected && "bg-primary-75 text-primary"}`} onClick={() => selectItem(room.fields?.title?.stringValue)}>
                           <div className="d-flex w-100 justify-content-between align-items-start mb-2">
                             <h5 className="mb-1">{room.fields?.title?.stringValue}</h5>
                             <p className="mb-1 w-50 text-start ">建議人數：{room.fields.number.stringValue}</p>
@@ -408,7 +410,7 @@ function App() {
           {/* 借用者資料 */}
           <section className="mt-4 mt-md-8 mb-md-4 mb-2 row">
             <div className="col-md-6 mx-auto bg-white p-4 rounded">
-              <div className="row g-4">
+              <div className="row g-0 g-md-4">
                 <div className="col-md-6">
                   <Input
                     register={register}
@@ -465,9 +467,21 @@ function App() {
                   <Input
                     register={register}
                     errors={errors}
-                    id="Email"
+                    id="email"
                     type="email"
                     labelText="Email"
+                    mark="*"
+                    rules={{
+                      required: {
+                        value: true,
+                        message: '聯絡人為必填',
+                      },
+                      pattern: {
+                        value:
+                          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                        message: '格式不正確',
+                      },
+                    }}
                   />
                 </div>
                 <div className="col-md-6">
@@ -482,6 +496,10 @@ function App() {
                       required: {
                         value: true,
                         message: '參加人數為必填',
+                      },
+                      min: {
+                        value: 1,
+                        message: '參加人數至少 1 人'
                       }
                     }}
                   />
@@ -537,6 +555,7 @@ function App() {
       </div>
       <AlertModal alertRef={alertRef} modalRef={modalRef} />
       <Toast />
+      <ScreenLoading isScreenLoading={isScreenLoading} />
     </div>
   )
 }
