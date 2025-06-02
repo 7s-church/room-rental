@@ -278,10 +278,10 @@ function App() {
           <section className="border-bottom border-primary py-md-6 py-0">
             <h3 className="mt-4 mb-4"><small className="text-danger">*</small>請選擇時間</h3>
             <div className="row g-4">
-              <div className="col-md-6 d-flex justify-content-center">
+              <div className="col-lg-6 d-flex justify-content-center">
                 <Calendar onChange={setSelectedDate} value={selectedDate} />
               </div>
-              <div className="col-md-6">
+              <div className="col-lg-6">
                 {weekdayString === '星期一' ? (
                   <h4 className="mt-4">週一為本堂休假日，<br />若有借用需求請洽行政同工或本堂長老</h4>
                 ) : (<>
@@ -327,7 +327,7 @@ function App() {
               <button type="button" className="btn btn-primary mb-3 me-3 ms-auto text-nowrap py-2 px-4" onClick={seeAll}>看全部</button>
             </div>
             <div className="row g-0 g-md-5">
-              <div className="col-md-6 mb-5">
+              <div className="col-lg-6 mb-5">
                 <div className="row g-2 g-lg-3">
                   {roomNameList.map((roomName) => {
                     const dateBookings = bookingList[dateString];
@@ -349,7 +349,7 @@ function App() {
                   })}
                 </div>
               </div>
-              <div className="col-md-6">
+              <div className="col-lg-6">
                 {/* 手機板 */}
                 <div className="d-md-none">
                   <Swiper
@@ -409,9 +409,9 @@ function App() {
           </section>
           {/* 借用者資料 */}
           <section className="mt-4 mt-md-8 mb-md-4 mb-2 row">
-            <div className="col-md-6 mx-auto bg-white p-4 rounded">
+            <div className="col-lg-6 mx-auto bg-white p-4 rounded">
               <div className="row g-0 g-md-4">
-                <div className="col-md-6">
+                <div className="col-lg-6">
                   <Input
                     register={register}
                     errors={errors}
@@ -427,7 +427,7 @@ function App() {
                     }}
                   />
                 </div>
-                <div className="col-md-6">
+                <div className="col-lg-6">
                   <Input
                     register={register}
                     errors={errors}
@@ -443,7 +443,7 @@ function App() {
                     }}
                   />
                 </div>
-                <div className="col-md-6">
+                <div className="col-lg-6">
                   <Input
                     register={register}
                     errors={errors}
@@ -463,7 +463,7 @@ function App() {
                     }}
                   />
                 </div>
-                <div className="col-md-6">
+                <div className="col-lg-6">
                   <Input
                     register={register}
                     errors={errors}
@@ -484,7 +484,7 @@ function App() {
                     }}
                   />
                 </div>
-                <div className="col-md-6">
+                <div className="col-lg-6">
                   <Input
                     register={register}
                     errors={errors}

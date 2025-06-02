@@ -51,7 +51,7 @@ function AdminLogin() {
     return (
         <div className="container">
             <div className="row">
-                <div className="card border-0 mx-auto my-lg-9 my-7 col-md-4">
+                <div className="card border-0 mx-auto my-lg-9 my-7 col-md-6 col-lg-4">
                     <div className="card-body mb-3">
                         <h1 className="card-title fs-2 text-center text-primary mb-9">
                             管理者登入
