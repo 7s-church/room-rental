@@ -109,6 +109,7 @@ function CalendarView({ events, onDataChange }) {
                     time: '時間',
                     event: '事件',
                     noEventsInRange: '這個時間範圍沒有活動。',
+                    dayLayoutAlgorithm: "no-overlap"
                 }}
                 components={{
                     event: CustomEvent,

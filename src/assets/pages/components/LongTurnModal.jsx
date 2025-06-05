@@ -14,6 +14,10 @@ function LongTurnModal({ modalRef }) {
     const dispatch = useDispatch();
     const [isScreenLoading, setIsScreenLoading] = useState(false)
     const weekdays = ["星期二", "星期三", "星期四", "星期五", "星期六", "星期日"];
+    const roomNameList = ["7樓會議室", "601餐廳", "603教室", "503教室", "505會議室", "506圖書室",
+    "507音樂教室", "402母子室", "406禱告室", "407禱告室", "三樓大堂", "205地板教室",
+    "206教室", "204教室", "203教室", "202教室", "交誼廳", "一樓副堂", "一樓台語堂", "舊101室"]
+    const [selectRoom, setSelectRoom]= useState('')
     const {
         register,
         handleSubmit,
@@ -100,7 +104,7 @@ function LongTurnModal({ modalRef }) {
                                         />
                                     </div>
                                     <div className="col-12">
-                                        <label htmlFor="exampleFormControlTextarea1" className="form-label"><small className="text-danger">*</small>借用月份、頻率等</label>
+                                        <label htmlFor="exampleFormControlTextarea1" className="form-label"><small className="text-danger">*</small>借用月份、全年度等</label>
                                         <textarea {...register("description", {
                                             required: {
                                                 value: true,
@@ -111,20 +115,26 @@ function LongTurnModal({ modalRef }) {
                                         )}
                                     </div>
                                     <div className="col-md-6">
-                                        <Input
-                                            register={register}
-                                            errors={errors}
-                                            id="location"
-                                            type="text"
-                                            labelText="場地"
-                                            mark="*"
-                                            rules={{
+                                        <label className="form-label"><small className="text-danger">*</small>場地</label>
+                                        <select {...register("location", {
                                                 required: {
                                                     value: true,
                                                     message: '借用場地為必填',
                                                 }
-                                            }}
-                                        />
+                                            })}
+                                            className={`form-select ${errors.location && 'is-invalid'}`}
+                                            id='location'
+                                            defaultValue=""
+                                            onChange={setSelectRoom}
+                                            >
+                                            <option value="">請選擇場地</option>
+                                            {roomNameList.map((room)=>{
+                                                return (<option value={room} key={room}>{room}</option>)
+                                            })}
+                                        </select>
+                                        {errors.location && (
+                                            <div className="invalid-feedback">{errors.location?.message}</div>
+                                        )}
                                     </div>
                                     <div className="col-md-6">
                                         <Input
@@ -182,7 +192,7 @@ function LongTurnModal({ modalRef }) {
                                         <Input
                                             register={register}
                                             errors={errors}
-                                            id="Email"
+                                            id="email"
                                             type="email"
                                             labelText="Email"
                                         />
