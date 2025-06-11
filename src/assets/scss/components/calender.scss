@@ -1,0 +1,34 @@
+.fc-event{
+    cursor: pointer;
+}
+
+/* 只針對 resourceTimelineMonth 這個月視圖調整背景色、字體大小等 */
+.fc .fc-resourceTimelineMonth-view {
+  background-color: #f9f9f9;
+  font-size: 14px;
+}
+
+/* 調整資源欄標題樣式 */
+.fc .fc-resourceTimelineMonth-view .fc-col-header-cell-cushion {
+  font-weight: bold;
+  color: #4D0000;
+}
+
+/* 調整時間軸格子底色 */
+.fc .fc-resourceTimelineMonth-view .fc-timeline-slot {
+  background-color: #fff7e6;
+  border: 1px solid #ddd;
+}
+
+/* 調整事件外觀 */
+.fc .fc-resourceTimelineMonth-view .fc-event {
+  background-color: #4D0000;
+  color: white;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* 你也可以調整高度、間距 */
+.fc .fc-resourceTimelineMonth-view .fc-timeline {
+  row-gap: 8px;
+}

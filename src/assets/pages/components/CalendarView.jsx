@@ -1,40 +1,22 @@
-import { useState, useRef } from 'react'
-import { Calendar, momentLocalizer } from 'react-big-calendar'
-import 'react-big-calendar/lib/css/react-big-calendar.css'
-import format from 'date-fns/format'
-import parse from 'date-fns/parse'
-import startOfWeek from 'date-fns/startOfWeek'
-import getDay from 'date-fns/getDay'
-import { dateFnsLocalizer } from 'react-big-calendar'
-import 'react-big-calendar/lib/css/react-big-calendar.css'
-import zhTW from 'date-fns/locale/zh-TW'
-import EditEventModal from './EditEventModal'
+import { useRef, useState, useEffect } from 'react';
+import FullCalendar from '@fullcalendar/react';
+import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
+import interactionPlugin from '@fullcalendar/interaction';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import EditEventModal from './EditEventModal';
+import dayGridPlugin from '@fullcalendar/daygrid'
+import axios from "axios";
+import { createAsyncMessage } from "../../redux/slice/toastSlice"
+import { useDispatch } from "react-redux";
 
-
-
-const locales = {
-    'zh-TW': zhTW,
-}
-const localizer = dateFnsLocalizer({
-    format,
-    parse,
-    startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }),
-    getDay,
-    locales,
-})
-
+const projectId = "fir-room-rental";
 const defaultEventState = {
-    data: {
-        user: {
-            email: "",
-            contact: "",
-            content: "",
-            group: "",
-            number: "",
-            phone: ""
-
-        }
-    },
+    email: "",
+    contact: "",
+    content: "",
+    group: "",
+    number: "",
+    phone: "",
     date: "",
     location: "",
     times: [],
@@ -42,10 +24,95 @@ const defaultEventState = {
     endtime: "",
 }
 
-function CalendarView({ events, onDataChange }) {
-    const [selectedEvent, setSelectedEvent] = useState(null);
+function CalendarView() {
+    const [selectedEvent, setSelectedEvent] = useState(defaultEventState);
+    const [roomList, setRoomList] = useState([]);
+    const [events, setEvents] = useState([])
     const [modalMode, setModalMode] = useState(null);
+    const calendarRef = useRef(null);
     const modalRef = useRef(null);
+    const dispatch = useDispatch();
+
+    const getRoomList = async () => {
+        try {
+            const res = await axios.get(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/room`)
+            setRoomList(res.data.documents)
+            dispatch(
+                createAsyncMessage({
+                    text: '取得場地資料',
+                    type: '成功',
+                    status: 'success',
+                })
+            );
+        } catch (error) {
+            const { message } = error?.response?.data?.message || error.message || "未知錯誤";
+            dispatch(
+                createAsyncMessage({
+                    text: message,
+                    type: '取得場地資料失敗',
+                    status: 'failed',
+                })
+            );
+        }
+    }
+
+    const getBookingList = async (data) => {
+        try {
+            const res = await axios.get("https://us-central1-fir-room-rental.cloudfunctions.net/api/getBookings", data)
+            const mapEvents = res.data.map((booking) => {
+                const [year, month, day] = booking.date.split('-').map(Number);
+                const [startHour, startMinute] = booking.times[0].split(':').map(Number);
+                const [endHour, endMinute] = booking.times[booking.times.length - 1].split(':').map(Number);
+                const start = new Date(year, month - 1, day, startHour, startMinute);
+                const end = new Date(year, month - 1, day, endHour, endMinute);
+                const user = booking.data?.user || {};
+                return {
+                    id: booking.id,
+                    title: user.group || '',
+                    start,
+                    end,
+                    resourceId: booking.location,
+                    email: user.email || '',
+                    contact: user.contact || '',
+                    content: user.content || '',
+                    group: user.group || '',
+                    number: user.number || '',
+                    phone: user.phone || '',
+                    weekDay: booking.weekDay,
+                    times: booking.times,
+                    date: booking.date,
+                    starttime: booking.times[0],
+                    endtime: booking.times[booking.times.length - 1],
+                    location: booking.location
+                }
+            })
+            setEvents(mapEvents)
+            dispatch(
+                createAsyncMessage({
+                    text: '取得場地登記資料',
+                    type: '成功',
+                    status: 'success',
+                })
+            );
+        } catch (error) {
+            const { message } = error.response.data;
+            dispatch(
+                createAsyncMessage({
+                    text: message,
+                    type: '取得場地登記資料失敗',
+                    status: 'failed',
+                })
+            );
+        }
+    }
+
+    useEffect(() => {
+        getBookingList()
+        getRoomList()
+    }, [])
+
+    const roomNameList = roomList.map(room => ({ id: room.fields.title.stringValue, title: room.fields.title.stringValue }))
+
 
     const openModal = (mode, event) => {
         setModalMode(mode);
@@ -62,62 +129,57 @@ function CalendarView({ events, onDataChange }) {
         modalRef.current.show();
     };
 
-    const CustomEvent = ({ event }) => (
-        <span>
-            <strong>{event.title}</strong>
-            <br />
-            <small>{event.resource}</small>
-        </span>
-    );
+    const formatDate = (date) => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    };
     return (<>
         <div style={{ height: '100vh', margin: '20px' }}>
             <div className="d-flex text-nowrap align-items-center mb-5 justify-content-between">
                 <div className="input-group w-50">
-                    {/* <input type="text" className="form-control" placeholder="請輸入申請單位" aria-label="search" aria-describedby="search" />
-                    <span className="input-group-text" id="search">搜尋</span> */}
                 </div>
                 <div>
                     <button type="button" className="btn btn-primary me-3" onClick={() => openModal('create')}>新增場地登記</button>
                 </div>
             </div>
-            <Calendar
-                localizer={localizer}
+            <FullCalendar
+                plugins={[resourceTimelinePlugin, interactionPlugin, timeGridPlugin,dayGridPlugin]}
+                ref={calendarRef}
+                initialView="resourceTimelineWeek"
+                initialDate={new Date()}
+                resources={roomNameList}
                 events={events}
-                startAccessor="start"
-                endAccessor="end"
-                defaultView="week"
-                views={['month', 'week', 'day']}
-                culture="zh-TW"
-                min={new Date(1970, 1, 1, 8, 0)}
-                max={new Date(1970, 1, 1, 22, 0)}
-                step={30}
-                timeslots={1}
-                onSelectEvent={(event) => openModal('edit', event)}
-                formats={{
-                    timeGutterFormat: 'HH:mm',
+                height="auto"
+                editable={false}
+                selectable={true}
+                eventClick={({ event }) => {
+                    const data = {
+                        ...event.extendedProps,
+                        start: event.start,
+                        end: event.end,
+                        date: formatDate(event.start),
+                    };
+                    openModal('edit', data);
                 }}
-                messages={{
-                    week: '週',
-                    work_week: '工作週',
-                    day: '日',
-                    month: '月',
-                    previous: '上一頁',
-                    next: '下一頁',
+                slotMinTime="08:00:00"
+                slotMaxTime="22:00:00"
+                locale="zh-tw"
+                headerToolbar={{
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,resourceTimelineWeek,resourceTimelineDay',
+                }}
+                buttonText={{
                     today: '今天',
-                    agenda: '行程',
-                    date: '日期',
-                    time: '時間',
-                    event: '事件',
-                    noEventsInRange: '這個時間範圍沒有活動。',
-                    dayLayoutAlgorithm: "no-overlap"
+                    resourceTimelineDay: '日',
+                    resourceTimelineWeek: '週',
+                    dayGridMonth: '月',
                 }}
-                components={{
-                    event: CustomEvent,
-                }}
-                style={{ backgroundColor: '#fff', borderRadius: '10px' }}
             />
         </div>
-        <EditEventModal modalRef={modalRef} selectedEvent={selectedEvent} setSelectedEvent={setSelectedEvent} modalMode={modalMode} onSuccess={onDataChange} />
+        <EditEventModal modalRef={modalRef} selectedEvent={selectedEvent} setSelectedEvent={setSelectedEvent} modalMode={modalMode} getBookingList={getBookingList} />
     </>
     )
 }

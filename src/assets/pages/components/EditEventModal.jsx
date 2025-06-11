@@ -7,7 +7,7 @@ import axios from "axios";
 const projectId = "fir-room-rental";
 import { getAuth } from "firebase/auth";
 
-function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, onSuccess }) {
+function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, getBookingList }) {
     const editEventRef = useRef(null);
     const dispatch = useDispatch();
     const [isScreenLoading, setIsScreenLoading] = useState(false)
@@ -41,6 +41,17 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
         getRoomList()
     }, [])
 
+    const preparePayload = (event) => {
+        const userData = {};
+        userFieldKeys.forEach(key => {
+            userData[key] = event[key] || "";
+        });
+
+        return {
+            ...event,
+            data: { user: userData },
+        };
+    }
 
     const editBooking = async () => {
         setIsScreenLoading(true)
@@ -49,7 +60,8 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
             const user = auth.currentUser;
             if (!user) throw new Error("尚未登入");
             const token = await user.getIdToken();
-            await axios.put(`https://us-central1-fir-room-rental.cloudfunctions.net/api/editBooking/${selectedEvent.id}`, selectedEvent, {
+            const payload = preparePayload(selectedEvent);
+            await axios.put(`https://us-central1-fir-room-rental.cloudfunctions.net/api/editBooking/${selectedEvent.id}`, payload, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
@@ -78,7 +90,8 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
     const createNewBooking = async () => {
         setIsScreenLoading(true)
         try {
-            await axios.post("https://us-central1-fir-room-rental.cloudfunctions.net/api/addBooking", selectedEvent)
+            const payload = preparePayload(selectedEvent);
+            await axios.post("https://us-central1-fir-room-rental.cloudfunctions.net/api/addBooking", payload)
             dispatch(
                 createAsyncMessage({
                     text: '新增場地登記成功',
@@ -116,7 +129,7 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                 })
             );
         } finally {
-            onSuccess()
+            getBookingList()
             closeModal()
         }
     };
@@ -162,12 +175,7 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
         } else if (userFieldKeys.includes(name)) {
             setSelectedEvent((prev) => ({
                 ...prev,
-                data: {
-                    user: {
-                        ...prev.data.user,
-                        [name]: updatedValue,
-                    },
-                },
+                [name]: updatedValue,
             }));
         }
         else {
@@ -287,7 +295,7 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                                                 className="form-select"
                                                 id="starttime"
                                                 name="starttime"
-                                                value={selectedEvent?.starttime ?? ""}
+                                                value={selectedEvent.starttime ?? ""}
                                                 onChange={getinputValue}>
                                                 {times.map((time) => {
                                                     return (
@@ -302,7 +310,7 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                                                 name="endtime"
                                                 value={selectedEvent?.endtime ?? ""}
                                                 onChange={getinputValue}>
-                                                {(selectedEvent?.starttime ? times.filter(time => time >= selectedEvent.starttime) : times)
+                                                {(selectedEvent.starttime ? times.filter(time => time >= selectedEvent.starttime) : times)
                                                     .map((time) => {
                                                         return (
                                                             <option value={time} key={time}>{time}</option>
@@ -335,7 +343,7 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                                         className="form-control"
                                         id="group"
                                         name="group"
-                                        value={selectedEvent?.data.user.group ?? ""}
+                                        value={selectedEvent.group ?? ""}
                                         onChange={getinputValue} />
                                 </div>
                                 <div className="col-md-6">
@@ -345,7 +353,7 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                                         className="form-control"
                                         id="contact"
                                         name="contact"
-                                        value={selectedEvent?.data.user.contact ?? ""}
+                                        value={selectedEvent.contact ?? ""}
                                         onChange={getinputValue} />
                                 </div>
                                 <div className="col-md-6">
@@ -355,7 +363,7 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                                         className="form-control"
                                         id="phone"
                                         name="phone"
-                                        value={selectedEvent?.data.user.phone ?? ""}
+                                        value={selectedEvent.phone ?? ""}
                                         onChange={getinputValue} />
                                 </div>
                                 <div className="col-md-6">
@@ -365,7 +373,7 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                                         className="form-control"
                                         id="email"
                                         name="email"
-                                        value={selectedEvent?.data.user.email ?? ""}
+                                        value={selectedEvent.email ?? ""}
                                         onChange={getinputValue} />
                                 </div>
                                 <div className="col-md-6">
@@ -375,7 +383,7 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                                         className="form-control"
                                         id="number"
                                         name="number"
-                                        value={selectedEvent?.data.user.number ?? ""}
+                                        value={selectedEvent.number ?? ""}
                                         onChange={getinputValue} />
                                 </div>
                                 <div className="col-12">
@@ -385,7 +393,7 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                                         id="content"
                                         name="content"
                                         rows="3"
-                                        value={selectedEvent?.data.user.content ?? ""}
+                                        value={selectedEvent.content ?? ""}
                                         onChange={getinputValue}></textarea>
                                 </div>
                             </div>
@@ -434,7 +442,7 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                                                 className="form-select"
                                                 id="starttime"
                                                 name="starttime"
-                                                value={selectedEvent?.starttime ?? ""}
+                                                value={selectedEvent.starttime ?? ""}
                                                 onChange={getinputValue}>
                                                 {times.map((time) => {
                                                     return (
@@ -447,9 +455,9 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                                                 className="form-select"
                                                 id="endtime"
                                                 name="endtime"
-                                                value={selectedEvent?.endtime ?? ""}
+                                                value={selectedEvent.endtime ?? ""}
                                                 onChange={getinputValue}>
-                                                {(selectedEvent?.starttime ? times.filter(time => time >= selectedEvent.starttime) : times)
+                                                {(selectedEvent.starttime ? times.filter(time => time >= selectedEvent.starttime) : times)
                                                     .map((time) => {
                                                         return (
                                                             <option value={time} key={time}>{time}</option>
@@ -465,7 +473,7 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                                         className="form-select"
                                         id="location"
                                         name="location"
-                                        value={selectedEvent?.location ?? ""}
+                                        value={selectedEvent.location ?? ""}
                                         onChange={getinputValue}>
                                         <option value="" disabled hidden>請選擇場地</option>
                                         {roomList.map((room) => {
@@ -482,7 +490,7 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                                         className="form-control"
                                         id="group"
                                         name="group"
-                                        value={selectedEvent?.data.user.group ?? ""}
+                                        value={selectedEvent.group ?? ""}
                                         onChange={getinputValue} />
                                 </div>
                                 <div className="col-md-6">
@@ -492,7 +500,7 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                                         className="form-control"
                                         id="contact"
                                         name="contact"
-                                        value={selectedEvent?.data.user.contact ?? ""}
+                                        value={selectedEvent.contact ?? ""}
                                         onChange={getinputValue} />
                                 </div>
                                 <div className="col-md-6">
@@ -502,7 +510,7 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                                         className="form-control"
                                         id="phone"
                                         name="phone"
-                                        value={selectedEvent?.data.user.phone ?? ""}
+                                        value={selectedEvent.phone ?? ""}
                                         onChange={getinputValue} />
                                 </div>
                                 <div className="col-md-6">
@@ -512,7 +520,7 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                                         className="form-control"
                                         id="email"
                                         name="email"
-                                        value={selectedEvent?.data.user.email ?? ""}
+                                        value={selectedEvent.email ?? ""}
                                         onChange={getinputValue} />
                                 </div>
                                 <div className="col-md-6">
@@ -522,7 +530,7 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                                         className="form-control"
                                         id="number"
                                         name="number"
-                                        value={selectedEvent?.data.user.number ?? ""}
+                                        value={selectedEvent.number ?? ""}
                                         onChange={getinputValue} />
                                 </div>
                                 <div className="col-12">
@@ -532,7 +540,7 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                                         id="content"
                                         name="content"
                                         rows="3"
-                                        value={selectedEvent?.data.user.content ?? ""}
+                                        value={selectedEvent.content ?? ""}
                                         onChange={getinputValue}></textarea>
                                 </div>
                             </div>
