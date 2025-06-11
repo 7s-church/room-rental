@@ -66,9 +66,14 @@ function CalendarView() {
                 const start = new Date(year, month - 1, day, startHour, startMinute);
                 const end = new Date(year, month - 1, day, endHour, endMinute);
                 const user = booking.data?.user || {};
+
+                const formetTime = (timeStr) => {
+                    const [hour, minute] = timeStr.split(':');
+                    return `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
+                }
                 return {
                     id: booking.id,
-                    title: user.group || '',
+                    title: `[${booking.location}] ${booking.data.user.group ?? ''}`,
                     start,
                     end,
                     resourceId: booking.location,
@@ -83,7 +88,8 @@ function CalendarView() {
                     date: booking.date,
                     starttime: booking.times[0],
                     endtime: booking.times[booking.times.length - 1],
-                    location: booking.location
+                    location: booking.location,
+                    displayTimeRange: `${formetTime(booking.times[0])}~${formetTime(booking.times[booking.times.length - 1])}`
                 }
             })
             setEvents(mapEvents)
@@ -145,7 +151,7 @@ function CalendarView() {
                 </div>
             </div>
             <FullCalendar
-                plugins={[resourceTimelinePlugin, interactionPlugin, timeGridPlugin,dayGridPlugin]}
+                plugins={[resourceTimelinePlugin, interactionPlugin, timeGridPlugin, dayGridPlugin]}
                 ref={calendarRef}
                 initialView="resourceTimelineWeek"
                 initialDate={new Date()}
@@ -156,6 +162,7 @@ function CalendarView() {
                 selectable={true}
                 eventClick={({ event }) => {
                     const data = {
+                        id: event.id,
                         ...event.extendedProps,
                         start: event.start,
                         end: event.end,
@@ -163,9 +170,20 @@ function CalendarView() {
                     };
                     openModal('edit', data);
                 }}
+                locale="zh-tw"
                 slotMinTime="08:00:00"
                 slotMaxTime="22:00:00"
-                locale="zh-tw"
+                slotLabelFormat={[
+                    { weekday: 'short', day: 'numeric', month: 'numeric' }, // 顯示 "三 6/11"
+                    { hour: '2-digit', minute: '2-digit', hour12: false },  // 顯示 "08:00"、"09:00"
+                ]}
+                slotLabelInterval={{ hours: 1 }}
+                eventTimeFormat={{
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false, // 24 小時制
+                }}
+
                 headerToolbar={{
                     left: 'prev,next today',
                     center: 'title',
@@ -176,6 +194,14 @@ function CalendarView() {
                     resourceTimelineDay: '日',
                     resourceTimelineWeek: '週',
                     dayGridMonth: '月',
+                }}
+                eventContent={(arg) => {
+                    if (arg.view.type !== 'dayGridMonth') return true;
+                    const event = arg.event;
+                    const { displayTimeRange, location, group } = event.extendedProps;
+                    return {
+                        html: `<b>${displayTimeRange}</b>[${location}] ${group}`,
+                    };
                 }}
             />
         </div>

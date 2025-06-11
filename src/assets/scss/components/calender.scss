@@ -32,3 +32,20 @@
 .fc .fc-resourceTimelineMonth-view .fc-timeline {
   row-gap: 8px;
 }
+
+.fc-daygrid-event-harness{
+  border: 1px solid $primary;
+  overflow: hidden;
+}
+.fc-daygrid-dot-event {
+  display: flex;
+  flex-direction: column;
+}
+
+.fc-daygrid-event-dot{
+  display: none;
+}
+
+.fc-daygrid-event{
+  font-size: 14px;
+}
