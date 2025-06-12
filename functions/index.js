@@ -88,4 +88,35 @@ app.delete("/deleteBooking/:id", authenticate, async (req, res) => {
     }
 });
 
+// 新增 or 更新 allowNextYear 設定（只有授權者可用）
+app.post("/setAllowNextYear", authenticate, async (req, res) => {
+    const { allowNextYear } = req.body;
+
+    if (typeof allowNextYear !== 'boolean') {
+        return res.status(400).send("Invalid allowNextYear value");
+    }
+
+    try {
+        await db.collection("config").doc("global").set(
+            { allowNextYear }, { merge: true }
+        );
+        res.status(200).send({ success: true, allowNextYear });
+    } catch (error) {
+        console.error("Error updating allowNextYear: ", error);
+        res.status(500).send("Error updating setting");
+    }
+});
+
+// 任何人都可以讀取開放設定
+app.get("/getAllowNextYear", async (req, res) => {
+    try {
+        const docSnap = await db.collection("config").doc("global").get();
+        const data = docSnap.data() || {};
+        res.status(200).send({ allowNextYear: data.allowNextYear ?? false });
+    } catch (error) {
+        console.error("Error fetching setting: ", error);
+        res.status(500).send("Error fetching allowNextYear setting");
+    }
+});
+
 exports.api = functions.https.onRequest(app);

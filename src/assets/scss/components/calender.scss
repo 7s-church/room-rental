@@ -1,5 +1,5 @@
-.fc-event{
-    cursor: pointer;
+.fc-event {
+  cursor: pointer;
 }
 
 /* 只針對 resourceTimelineMonth 這個月視圖調整背景色、字體大小等 */
@@ -33,19 +33,32 @@
   row-gap: 8px;
 }
 
-.fc-daygrid-event-harness{
+.fc-daygrid-event-harness {
   border: 1px solid $primary;
   overflow: hidden;
 }
+
 .fc-daygrid-dot-event {
   display: flex;
   flex-direction: column;
 }
 
-.fc-daygrid-event-dot{
+.fc-daygrid-event-dot {
   display: none;
 }
 
-.fc-daygrid-event{
+.fc-daygrid-event {
   font-size: 14px;
+}
+
+@media print {
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .fc-toolbar,
+  .btn {
+    display: none;
+  }
 }

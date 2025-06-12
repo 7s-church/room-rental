@@ -8,6 +8,8 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import axios from "axios";
 import { createAsyncMessage } from "../../redux/slice/toastSlice"
 import { useDispatch } from "react-redux";
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const projectId = "fir-room-rental";
 const defaultEventState = {
@@ -29,6 +31,7 @@ function CalendarView() {
     const [roomList, setRoomList] = useState([]);
     const [events, setEvents] = useState([])
     const [modalMode, setModalMode] = useState(null);
+    const [currentView, setCurrentView] = useState('resourceTimelineWeek')
     const calendarRef = useRef(null);
     const modalRef = useRef(null);
     const dispatch = useDispatch();
@@ -141,6 +144,53 @@ function CalendarView() {
         const d = String(date.getDate()).padStart(2, '0');
         return `${y}-${m}-${d}`;
     };
+
+    //轉PDF
+    const handleExportPDF = () => {
+        const calendarEl = document.querySelector('.fc');
+        if (!calendarEl) return;
+
+        html2canvas(calendarEl, {
+            useCORS: true,
+            scale: 2,
+            scrollY: -window.scrollY
+        }).then((canvas) => {
+            const imgHeight = canvas.height;
+            const imgWidth = canvas.width;
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('landscape', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+
+            // 計算每頁圖片高度（按比例縮放）
+            const ratio = pdfWidth / imgWidth;
+            const scaledHeight = imgHeight * ratio;
+            let position = 0;
+
+            while (position < scaledHeight) {
+                const pageCanvas = document.createElement('canvas');
+                pageCanvas.width = canvas.width;
+                pageCanvas.height = (pdfHeight / ratio);
+
+                const pageCtx = pageCanvas.getContext('2d');
+                pageCtx.drawImage(
+                    canvas,
+                    0, position / ratio,
+                    canvas.width, pageCanvas.height,
+                    0, 0,
+                    canvas.width, pageCanvas.height
+                );
+
+                const pageData = pageCanvas.toDataURL('image/png');
+                if (position > 0) pdf.addPage();
+                pdf.addImage(pageData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+                position += pdfHeight;
+            }
+
+            pdf.save('月曆.pdf');
+        })
+    }
     return (<>
         <div style={{ height: '100vh', margin: '20px' }}>
             <div className="d-flex text-nowrap align-items-center mb-5 justify-content-between">
@@ -148,6 +198,10 @@ function CalendarView() {
                 </div>
                 <div>
                     <button type="button" className="btn btn-primary me-3" onClick={() => openModal('create')}>新增場地登記</button>
+                    {currentView === 'dayGridMonth' && (
+                        <button onClick={handleExportPDF} className="btn btn-primary me-3">
+                            匯出月曆 PDF
+                        </button>)}
                 </div>
             </div>
             <FullCalendar
@@ -202,6 +256,9 @@ function CalendarView() {
                     return {
                         html: `<b>${displayTimeRange}</b>[${location}] ${group}`,
                     };
+                }}
+                datesSet={(arg) => {
+                    setCurrentView(arg.view.type)
                 }}
             />
         </div>
