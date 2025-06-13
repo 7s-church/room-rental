@@ -35,12 +35,38 @@ const authenticate = async (req, res, next) => {
         return res.status(401).send("Unauthorized");
     }
 };
+// 預約衝突
+const checkTimeConflict = async ({ date, location, times, excludeId = null }) => {
+    const snapshot = await db.collection("bookings")
+        .where("date", "==", date)
+        .where("location", "==", location)
+        .get();
 
+    for (const doc of snapshot.docs) {
+        if (excludeId && doc.id === excludeId) continue;
+
+        const existingTimes = doc.data().times;
+        const hasOverlap = existingTimes.some(time => times.includes(time));
+        if (hasOverlap) return true;
+    }
+
+    return false;
+};
 
 app.post("/addBooking", async (req, res) => {
     const data = req.body;
 
     try {
+        const hasConflict = await checkTimeConflict({
+            date: data.date,
+            location: data.location,
+            times: data.times,
+        });
+
+        if (hasConflict) {
+            return res.status(409).send({ error: "場地與時段已有預約" });
+        }
+
         const docRef = await db.collection("bookings").add(data);
         res.status(200).send({ id: docRef.id });
     } catch (error) {
@@ -68,6 +94,16 @@ app.put("/editBooking/:id", authenticate, async (req, res) => {
     const id = req.params.id;
     const newData = req.body;
     try {
+        const hasConflict = await checkTimeConflict({
+            date: newData.date,
+            location: newData.location,
+            times: newData.times,
+            excludeId: id,
+        });
+
+        if (hasConflict) {
+            return res.status(409).send({ error: "場地與時段已有預約" });
+        }
         await db.collection("bookings").doc(id).update(newData);
         res.status(200).send({ id, ...newData });
     } catch (error) {
