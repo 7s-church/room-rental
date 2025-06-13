@@ -4,6 +4,7 @@ import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
 import interactionPlugin from '@fullcalendar/interaction';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import EditEventModal from './EditEventModal';
+import FullYearBooking from './FullYearBooking';
 import dayGridPlugin from '@fullcalendar/daygrid'
 import axios from "axios";
 import { createAsyncMessage } from "../../redux/slice/toastSlice"
@@ -24,6 +25,7 @@ const defaultEventState = {
     times: [],
     starttime: "",
     endtime: "",
+    groupId: ""
 }
 
 function CalendarView() {
@@ -32,8 +34,11 @@ function CalendarView() {
     const [events, setEvents] = useState([])
     const [modalMode, setModalMode] = useState(null);
     const [currentView, setCurrentView] = useState('resourceTimelineWeek')
+    const [extended, setExtended] = useState(false)
+    const [bookingList, setBookingList] = useState([])
     const calendarRef = useRef(null);
-    const modalRef = useRef(null);
+    const fullYearModalRef = useRef(null);
+    const editModalRef = useRef(null);
     const dispatch = useDispatch();
 
     const getRoomList = async () => {
@@ -62,6 +67,7 @@ function CalendarView() {
     const getBookingList = async (data) => {
         try {
             const res = await axios.get("https://us-central1-fir-room-rental.cloudfunctions.net/api/getBookings", data)
+
             const mapEvents = res.data.map((booking) => {
                 const [year, month, day] = booking.date.split('-').map(Number);
                 const [startHour, startMinute] = booking.times[0].split(':').map(Number);
@@ -92,10 +98,25 @@ function CalendarView() {
                     starttime: booking.times[0],
                     endtime: booking.times[booking.times.length - 1],
                     location: booking.location,
-                    displayTimeRange: `${formetTime(booking.times[0])}~${formetTime(booking.times[booking.times.length - 1])}`
+                    displayTimeRange: `${formetTime(booking.times[0])}~${formetTime(booking.times[booking.times.length - 1])}`,
+                    groupId: booking.groupId || ''
                 }
             })
+
             setEvents(mapEvents)
+            const bookedMap = {};
+            res.data.forEach((booking) => {
+                const { date, location, times } = booking;
+
+                if (!bookedMap[date]) {
+                    bookedMap[date] = {}
+                }
+                if (!bookedMap[date][location]) {
+                    bookedMap[date][location] = [];
+                }
+                bookedMap[date][location].push(...times);
+            })
+            setBookingList(bookedMap);
             dispatch(
                 createAsyncMessage({
                     text: '取得場地登記資料',
@@ -114,11 +135,11 @@ function CalendarView() {
             );
         }
     }
-
     useEffect(() => {
         getBookingList()
         getRoomList()
     }, [])
+
 
     const roomNameList = roomList.map(room => ({ id: room.fields.title.stringValue, title: room.fields.title.stringValue }))
 
@@ -135,9 +156,17 @@ function CalendarView() {
             default:
                 break;
         }
-        modalRef.current.show();
+        editModalRef.current.show();
     };
 
+    const openFullYearModal = () => {
+        setSelectedEvent(defaultEventState);
+        fullYearModalRef.current.show();
+    };
+
+    const menuExtend = () => {
+        setExtended(prevState => !prevState)
+    }
     const formatDate = (date) => {
         const y = date.getFullYear();
         const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -197,17 +226,24 @@ function CalendarView() {
                 <div className="input-group w-50">
                 </div>
                 <div>
-                    <button type="button" className="btn btn-primary me-3" onClick={() => openModal('create')}>新增場地登記</button>
-                    {currentView === 'dayGridMonth' && (
-                        <button onClick={handleExportPDF} className="btn btn-primary me-3">
-                            匯出月曆 PDF
-                        </button>)}
+                    <div className="d-flex align-items-center">
+                        <button type="button" className="btn btn-primary me-3" onClick={() => openModal('create')}>新增場地登記</button>
+                        {currentView === 'dayGridMonth' && (
+                            <button onClick={handleExportPDF} className="btn btn-primary me-3">
+                                匯出月曆 PDF
+                            </button>)}
+                        <button type="button" className="btn mb-0" onClick={menuExtend}>擴充功能<span className="material-symbols-outlined align-middle text-primary">{extended ? "arrow_drop_up" : "arrow_drop_down"}</span></button>
+                    </div>
+                    {extended && (
+                        <div className="mt-3">
+                            <button type="button" className="btn btn-primary-400 me-3" onClick={openFullYearModal}>新增長期場地登記</button>
+                        </div>)}
                 </div>
             </div>
             <FullCalendar
                 plugins={[resourceTimelinePlugin, interactionPlugin, timeGridPlugin, dayGridPlugin]}
                 ref={calendarRef}
-                initialView="resourceTimelineWeek"
+                initialView="dayGridMonth"
                 initialDate={new Date()}
                 resources={roomNameList}
                 events={events}
@@ -220,6 +256,7 @@ function CalendarView() {
                         ...event.extendedProps,
                         start: event.start,
                         end: event.end,
+                        groupId: event.groupId,
                         date: formatDate(event.start),
                     };
                     openModal('edit', data);
@@ -262,7 +299,8 @@ function CalendarView() {
                 }}
             />
         </div>
-        <EditEventModal modalRef={modalRef} selectedEvent={selectedEvent} setSelectedEvent={setSelectedEvent} modalMode={modalMode} getBookingList={getBookingList} />
+        <EditEventModal modalRef={editModalRef} selectedEvent={selectedEvent} setSelectedEvent={setSelectedEvent} modalMode={modalMode} getBookingList={getBookingList} bookingList={bookingList} />
+        <FullYearBooking modalRef={fullYearModalRef} selectedEvent={selectedEvent} setSelectedEvent={setSelectedEvent} getBookingList={getBookingList} />
     </>
     )
 }

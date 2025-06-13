@@ -31,13 +31,6 @@ function AdminSettingModal({ modalRef }) {
         try {
             const res = await axios.get("https://us-central1-fir-room-rental.cloudfunctions.net/api/getAllowNextYear")
             setAllowNextYear(res.data.allowNextYear)
-            dispatch(
-                createAsyncMessage({
-                    text: '取得明年度場地開放與否資料',
-                    type: '成功',
-                    status: 'success',
-                })
-            );
         } catch (error) {
             const { message } = error?.response?.data?.message || error.message || "未知錯誤";
             dispatch(

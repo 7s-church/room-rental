@@ -20,7 +20,7 @@ function Toast() {
                     aria-atomic="true"
                 >
                     <div
-                        className={`toast-header text-white ${message.status === 'success' ? 'bg-success' : 'bg-alert'}`}
+                        className={`toast-header text-white ${message.status === 'success' ? 'bg-success' : 'bg-danger'}`}
                     >
                         <strong className="me-auto">{message.type}</strong>
                         <button

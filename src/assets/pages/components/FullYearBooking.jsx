@@ -5,16 +5,25 @@ import { useDispatch } from "react-redux";
 import { createAsyncMessage } from "../../redux/slice/toastSlice";
 import axios from "axios";
 const projectId = "fir-room-rental";
-import { getAuth } from "firebase/auth";
 
-function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, getBookingList, bookingList }) {
-    const editEventRef = useRef(null);
+function FullYearBooking({ modalRef, selectedEvent, setSelectedEvent, getBookingList }) {
+    const fullYearBookingRef = useRef(null);
     const dispatch = useDispatch();
     const [isScreenLoading, setIsScreenLoading] = useState(false)
-    const [weekday, setWeekday] = useState('')
     const weekdays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+    const weekdayMap = {
+        "星期日": 0,
+        "星期一": 1,
+        "星期二": 2,
+        "星期三": 3,
+        "星期四": 4,
+        "星期五": 5,
+        "星期六": 6,
+    };
     const times = ["08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00"]
     const userFieldKeys = ["email", "contact", "content", "group", "number", "phone"];
+    const today = new Date().toISOString().split('T')[0]
+
 
     const [roomList, setRoomList] = useState([]);
 
@@ -42,69 +51,88 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
     }, [])
 
     const preparePayload = (event) => {
-        const { date, location, weekDay, times } = event;
         const userData = {};
         userFieldKeys.forEach(key => {
             userData[key] = event[key] || "";
         });
-        return {
-            data: {
-                user: userData
-            },
-            date,
-            location,
-            weekDay,
-            times,
-        };
-    }
 
-    const editBooking = async () => {
-        setIsScreenLoading(true)
-        try {
-            const auth = getAuth();
-            const user = auth.currentUser;
-            if (!user) throw new Error("尚未登入");
-            const token = await user.getIdToken();
-            const payload = preparePayload(selectedEvent);
-            await axios.put(`https://us-central1-fir-room-rental.cloudfunctions.net/api/editBooking/${selectedEvent.id}`, payload, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            })
-            dispatch(
-                createAsyncMessage({
-                    text: '修改場地登記成功',
-                    type: '成功',
-                    status: 'success',
-                }))
+        const { dateFrom, dateTo, weekDay, times, location } = event;
+        const payload = [];
 
-        } catch (error) {
-            const message = error.response?.data?.error || error.message || '未知錯誤';
-            dispatch(
-                createAsyncMessage({
-                    text: message,
-                    type: '修改場地登記失敗',
-                    status: 'failed',
-                })
-            );
-        } finally {
-            setIsScreenLoading(false)
+        const groupId = `group-${Date.now()}`;
+        const startDate = new Date(dateFrom);
+        const endDate = new Date(dateTo);
+        const targetWeekday = weekdayMap[weekDay];
+
+        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+            if (d.getDay() === targetWeekday) {
+                const date = d.toISOString().split('T')[0];
+                payload.push({
+                    data: {
+                        user: userData
+                    },
+                    date,
+                    location,
+                    weekDay,
+                    times,
+                    groupId
+                });
+            }
         }
+
+        console.log("準備 payload", {
+            dateFrom,
+            dateTo,
+            weekDay,
+            targetWeekday,
+            allDays: [...Array(7).keys()].map(i => ({
+                day: i,
+                label: weekdays[i]
+            }))
+        });
+        return payload
     }
 
     const createNewBooking = async () => {
         setIsScreenLoading(true)
-        try {
-            const payload = preparePayload(selectedEvent);
-            await axios.post("https://us-central1-fir-room-rental.cloudfunctions.net/api/addBooking", payload)
+        const payloadList = preparePayload(selectedEvent);
+        let successCount = 0;
+
+        const { dateFrom, dateTo, weekDay, times, location } = selectedEvent;
+
+        if (!dateFrom || !dateTo || !weekDay || !times?.length || !location) {
             dispatch(
                 createAsyncMessage({
-                    text: '新增場地登記成功',
+                    text: '請確認已選擇開始/結束日期、星期、時段與場地',
+                    type: '欄位未填寫完整',
+                    status: 'warning',
+                })
+            );
+            return;
+        }
+        try {
+            if (res.status === 409) {
+                dispatch(createAsyncMessage({
+                    text: '該時間段已有人預約，請選擇其他時間或場地',
+                    type: '預約衝突',
+                    status: 'failed',
+                }));
+                return;
+            }
+
+            for (const booking of payloadList) {
+                await axios.post("https://us-central1-fir-room-rental.cloudfunctions.net/api/addBooking", booking);
+                successCount++;
+            }
+            dispatch(
+                createAsyncMessage({
+                    text: `成功新增 ${successCount} 筆場地登記資料`,
                     type: '成功',
                     status: 'success',
-                }))
+                })
+            );
         } catch (error) {
-            const message = error.response?.data?.error || error.message || '未知錯誤';
+            const { message } = error.response.data;
             dispatch(
                 createAsyncMessage({
                     text: message,
@@ -113,36 +141,16 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                 })
             );
         } finally {
+            getBookingList()
             setIsScreenLoading(false)
             closeModal()
         }
     }
 
-    const btnUpdateProduct = async () => {
-        try {
-            const apiswitch =
-                modalMode === 'create' ? createNewBooking : editBooking;
-            await apiswitch();
-
-        } catch (error) {
-            const message = error.response?.data?.error || error.message || '未知錯誤';
-            dispatch(
-                createAsyncMessage({
-                    text: message,
-                    type: '失敗',
-                    status: 'failed',
-                })
-            );
-        } finally {
-            getBookingList()
-            closeModal()
-        }
-    };
 
     const selectTimeRange = (start, end) => {
         const startIndex = times.indexOf(start);
         const endIndex = times.indexOf(end);
-
         if (startIndex === -1 || endIndex === -1 || startIndex > endIndex) {
             return []
         }
@@ -176,6 +184,22 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                 ...prev,
                 date: value,
                 weekDay: weekDay,
+            }))
+        } else if (name === 'weekDay') {
+            const targetDay = weekdayMap[value];
+            const todayDate = new Date();
+            const todayDay = todayDate.getDay();
+
+            // 計算距離下一個目標星期的天數（例如今天週一，選週三 → +2）
+            const diff = (targetDay + 7 - todayDay) % 7;
+            const nextTargetDate = new Date(todayDate);
+            nextTargetDate.setDate(todayDate.getDate() + diff);
+            const nextDateStr = nextTargetDate.toISOString().split('T')[0];
+
+            setSelectedEvent((prev) => ({
+                ...prev,
+                weekDay: value,
+                dateFrom: nextDateStr,
             }));
         } else {
             setSelectedEvent((prev) => ({
@@ -185,43 +209,8 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
         }
     };
 
-    const deleteBooking = async () => {
-        setIsScreenLoading(true)
-        try {
-            const auth = getAuth();
-            const user = auth.currentUser;
-            if (!user) throw new Error("尚未登入");
-            const token = await user.getIdToken();
-            await axios.delete(`https://us-central1-fir-room-rental.cloudfunctions.net/api/deleteBooking/${selectedEvent.id}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            })
-            dispatch(
-                createAsyncMessage({
-                    text: '刪除場地登記成功',
-                    type: '成功',
-                    status: 'success',
-                }))
-
-        } catch (error) {
-            const { message } = error.response.data;
-            dispatch(
-                createAsyncMessage({
-                    text: message,
-                    type: '刪除場地登記失敗',
-                    status: 'failed',
-                })
-            );
-        } finally {
-            setIsScreenLoading(false)
-            getBookingList()
-            closeModal()
-        }
-    }
-
     useEffect(() => {
-        modalRef.current = new Modal(editEventRef.current, {
+        modalRef.current = new Modal(fullYearBookingRef.current, {
             backdrop: false,
         })
     }, [])
@@ -231,59 +220,35 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
         modalRef.current.hide();
     };
 
-    const getWeekdayValue = (e) => {
-        const { name, value } = e.target;
-        if (name === 'date') {
-            const date = new Date(value);
-            const weekDay = weekdays[date.getDay()];
-            setSelectedEvent(prev => ({ ...prev, date: value, weekDay }));
-            setWeekday(weekDay)
-        }
-
-    }
-    // 預約衝突
-    const checkBookingConflict = () => {
-        const { date, location, times } = selectedEvent;
-
-        if (!bookingList[date] || !bookingList[date][location]) return false;
-
-        const bookedTimes = bookingList[date][location];
-        return times.some(time => bookedTimes.includes(time));
-    };
 
     return (
-        <div className="modal" tabIndex="-1" ref={editEventRef} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <div className="modal" tabIndex="-1" ref={fullYearBookingRef} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog">
                 <div className="modal-content">
                     <div className="modal-header">
-                        <h5 className="modal-title">{modalMode === 'create' ? '新增場地登記' : '編輯場地登記'}</h5>
+                        <h5 className="modal-title">新增長期場地登記</h5>
                         <div className="ms-auto">
-                            {modalMode === 'edit' && (<button type="button" className="btn btn-primary me-3" onClick={deleteBooking}>刪除此登記</button>)}
                             <button type="button" className="btn-close" aria-label="Close" onClick={closeModal}></button>
                         </div>
                     </div>
                     <div className="modal-body">
                         <div className="bg-white p-2 rounded">
-                            {selectedEvent.groupId !== '' && (<h6 className="mb-4 text-muted">群組ID: {selectedEvent.groupId}</h6>)}
                             <div className="row g-4">
                                 <div className="col-md-6">
-                                    <label htmlFor="date" className="form-label">日期</label>
-                                    <input
-                                        type="date"
-                                        className="form-control"
-                                        id="date"
-                                        name="date"
-                                        value={selectedEvent?.date ?? ""}
-                                        onChange={getWeekdayValue} />
-                                </div>
-                                <div className="col-md-6">
                                     <label htmlFor="weekDay" className="form-label">星期</label>
-                                    <input
+                                    <select
                                         className="form-select"
                                         id="weekDay"
                                         name="weekDay"
-                                        value={selectedEvent?.weekDay ?? weekday ?? ""}
-                                        readOnly />
+                                        value={selectedEvent.weekDay ?? ""}
+                                        onChange={getinputValue}>
+                                        <option value="" disabled hidden>請選擇星期幾</option>
+                                        {weekdays.map((weekday) => {
+                                            return (
+                                                <option value={weekday} key={weekday}>{weekday}</option>
+                                            )
+                                        })}
+                                    </select>
                                 </div>
                                 <div className="col-md-12">
                                     <div className="d-flex">
@@ -317,6 +282,26 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                                             </select>
                                         </div>
                                     </div>
+                                </div>
+                                <div className="col-md-6">
+                                    <label htmlFor="weekDay" className="form-label">開始日期</label>
+                                    <input
+                                        type="date"
+                                        className="form-control"
+                                        id="dateFrom"
+                                        name="dateFrom"
+                                        value={selectedEvent.dateFrom || today}
+                                        onChange={getinputValue} />
+                                </div>
+                                <div className="col-md-6">
+                                    <label htmlFor="weekDay" className="form-label">結束日期</label>
+                                    <input
+                                        type="date"
+                                        className="form-control"
+                                        id="dateTo"
+                                        name="dateTo"
+                                        value={selectedEvent.dateTo || '2025-12-31'}
+                                        onChange={getinputValue} />
                                 </div>
                                 <div className="col-md-6">
                                     <label htmlFor="location" className="form-label">借用場地</label>
@@ -398,7 +383,7 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
                         </div>
                         <div className="modal-footer">
                             <button type="button" className="btn btn-secondary" data-bs-dismiss="modal" onClick={closeModal}>取消</button>
-                            <button type="submit" className="btn btn-primary" onClick={btnUpdateProduct}>確認送出</button>
+                            <button type="button" className="btn btn-primary" onClick={createNewBooking}>確認送出</button>
                         </div>
 
                     </div>
@@ -409,4 +394,4 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
     )
 }
 
-export default EditEventModal
+export default FullYearBooking
