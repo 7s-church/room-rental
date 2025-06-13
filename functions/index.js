@@ -155,4 +155,5 @@ app.get("/getAllowNextYear", async (req, res) => {
     }
 });
 
+
 exports.api = functions.https.onRequest(app);

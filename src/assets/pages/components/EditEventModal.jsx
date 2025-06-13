@@ -7,7 +7,7 @@ import axios from "axios";
 const projectId = "fir-room-rental";
 import { getAuth } from "firebase/auth";
 
-function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, getBookingList, bookingList }) {
+function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, getBookingList}) {
     const editEventRef = useRef(null);
     const dispatch = useDispatch();
     const [isScreenLoading, setIsScreenLoading] = useState(false)

@@ -111,14 +111,6 @@ function FullYearBooking({ modalRef, selectedEvent, setSelectedEvent, getBooking
             return;
         }
         try {
-            if (res.status === 409) {
-                dispatch(createAsyncMessage({
-                    text: '該時間段已有人預約，請選擇其他時間或場地',
-                    type: '預約衝突',
-                    status: 'failed',
-                }));
-                return;
-            }
 
             for (const booking of payloadList) {
                 await axios.post("https://us-central1-fir-room-rental.cloudfunctions.net/api/addBooking", booking);
@@ -132,7 +124,7 @@ function FullYearBooking({ modalRef, selectedEvent, setSelectedEvent, getBooking
                 })
             );
         } catch (error) {
-            const { message } = error.response.data;
+            const message = error.response?.data?.error || error.message || '未知錯誤';
             dispatch(
                 createAsyncMessage({
                     text: message,

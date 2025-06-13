@@ -9,6 +9,8 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import axios from "axios";
 import { createAsyncMessage } from "../../redux/slice/toastSlice"
 import { useDispatch } from "react-redux";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -35,11 +37,22 @@ function CalendarView() {
     const [modalMode, setModalMode] = useState(null);
     const [currentView, setCurrentView] = useState('resourceTimelineWeek')
     const [extended, setExtended] = useState(false)
-    const [bookingList, setBookingList] = useState([])
     const calendarRef = useRef(null);
     const fullYearModalRef = useRef(null);
     const editModalRef = useRef(null);
     const dispatch = useDispatch();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const auth = getAuth();
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                navigate("/adminlogin");
+            }
+        });
+
+        return () => unsubscribe();
+    }, [navigate]);
 
     const getRoomList = async () => {
         try {
@@ -104,19 +117,6 @@ function CalendarView() {
             })
 
             setEvents(mapEvents)
-            const bookedMap = {};
-            res.data.forEach((booking) => {
-                const { date, location, times } = booking;
-
-                if (!bookedMap[date]) {
-                    bookedMap[date] = {}
-                }
-                if (!bookedMap[date][location]) {
-                    bookedMap[date][location] = [];
-                }
-                bookedMap[date][location].push(...times);
-            })
-            setBookingList(bookedMap);
             dispatch(
                 createAsyncMessage({
                     text: '取得場地登記資料',
@@ -135,6 +135,7 @@ function CalendarView() {
             );
         }
     }
+
     useEffect(() => {
         getBookingList()
         getRoomList()
@@ -232,12 +233,10 @@ function CalendarView() {
                             <button onClick={handleExportPDF} className="btn btn-primary me-3">
                                 匯出月曆 PDF
                             </button>)}
-                        <button type="button" className="btn mb-0" onClick={menuExtend}>擴充功能<span className="material-symbols-outlined align-middle text-primary">{extended ? "arrow_drop_up" : "arrow_drop_down"}</span></button>
+                        {extended && (
+                            <button type="button" className="btn btn-primary-400" onClick={openFullYearModal}>新增長期場地登記</button>)}
+                        <button type="button" className="btn mb-0" onClick={menuExtend}><span className="material-symbols-outlined align-middle text-primary">{extended ? "chevron_right" : "chevron_left"}</span>擴充功能</button>
                     </div>
-                    {extended && (
-                        <div className="mt-3">
-                            <button type="button" className="btn btn-primary-400 me-3" onClick={openFullYearModal}>新增長期場地登記</button>
-                        </div>)}
                 </div>
             </div>
             <FullCalendar
@@ -299,7 +298,7 @@ function CalendarView() {
                 }}
             />
         </div>
-        <EditEventModal modalRef={editModalRef} selectedEvent={selectedEvent} setSelectedEvent={setSelectedEvent} modalMode={modalMode} getBookingList={getBookingList} bookingList={bookingList} />
+        <EditEventModal modalRef={editModalRef} selectedEvent={selectedEvent} setSelectedEvent={setSelectedEvent} modalMode={modalMode} getBookingList={getBookingList} />
         <FullYearBooking modalRef={fullYearModalRef} selectedEvent={selectedEvent} setSelectedEvent={setSelectedEvent} getBookingList={getBookingList} />
     </>
     )
