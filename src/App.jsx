@@ -270,13 +270,6 @@ function App() {
         bookedMap[date][location].push(...times);
       })
       setBookingList(bookedMap);
-      dispatch(
-        createAsyncMessage({
-          text: '取得場地登記資料',
-          type: '成功',
-          status: 'success',
-        })
-      );
     } catch (error) {
       const { message } = error.response.data;
       dispatch(
@@ -294,13 +287,6 @@ function App() {
     try {
       const res = await axios.get(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/room`)
       setRoomList(res.data.documents)
-      dispatch(
-        createAsyncMessage({
-          text: '取得場地資料',
-          type: '成功',
-          status: 'success',
-        })
-      );
     } catch (error) {
       const { message } = error.response.data;
       dispatch(
@@ -458,7 +444,7 @@ function App() {
       <div className="container pb-8">
         <form onSubmit={handleSubmit(onSubmit)} ref={formRef}>
           {/* 時間 */}
-          <section className="border-bottom border-primary py-md-6 py-0">
+          <section>
             <div className="row g-4 align-items-stretch">
               <div className="col-6">
                 <button type="button" className="btn btn-outline-primary w-100 h-100 py-3 btnL" onClick={() => setBookingType("single")}>
@@ -472,146 +458,151 @@ function App() {
                 </button>
               </div>
             </div>
-            {bookingType !== "" && (
-              bookingType === "single" ? (<>
-                <h3 className="mt-4 mb-4"><small className="text-danger">*</small>請選擇時間</h3>
-                <div className="row g-4">
-                  <div className="col-lg-6 d-flex justify-content-center">
-                    <Calendar
-                      onChange={setSelectedDate}
-                      value={selectedDate}
-                      minDate={minDate}
-                      maxDate={maxDate} />
-                  </div>
-                  <div className="col-lg-6">
-                    {weekdayString === '星期一' ? (
-                      <h4 className="mt-4">週一為本堂休假日，<br />若有借用需求請洽行政同工或本堂長老</h4>
-                    ) : (<>
-                      <h5 className="mb-4"><small className="text-danger">*</small>請選擇開始時間與結束時間</h5>
-                      <div className="d-flex">
-                        <div className="input-group mb-3 me-3 me-md-9">
-                          <span className="input-group-text">開始</span>
-                          <input type="text" className="form-control" value={startTime || ''} readOnly />
-                          <span className="input-group-text">結束</span>
-                          <input type="text" className="form-control" value={endTime || ''} readOnly />
-                        </div>
-                        <button type="button" className="btn btn-primary mb-3 me-3 ms-auto text-nowrap py-2 px-4 d-none d-md-block" onClick={removeSelectTime}>清除重選</button>
-                      </div>
-                      {filteredTimes.map((time) => {
-                        const currentIndex = times.indexOf(time);
-                        const startIndex = times.indexOf(startTime);
-                        const endIndex = times.indexOf(endTime);
-                        const isSelected =
-                          (startTime && !endTime && currentIndex === startIndex) ||
-                          (startTime && endTime && currentIndex >= startIndex && currentIndex <= endIndex);
-                        return (
-                          <button
-                            type="button"
-                            className={`btn me-2 mb-2 ${isSelected ? "btn-primary" : "btn-outline-primary"}`}
-                            key={time}
-                            onClick={() => handleSelectTime(time)}>
-                            {time}
-                          </button>
-                        )
-                      })}
-                    </>
-                    )}
-                    <div className="d-flex justify-content-end d-md-none">
-                      <button type="button" className="btn btn-primary mb-3 me-3 text-nowrap py-2 px-4" onClick={removeSelectTime}>清除重選</button>
+            {bookingType === "" ? (<div className="mb-8 mb-lg-5">
+            </div>) : (
+              <div className="border-bottom border-primary py-md-6 py-0">
+                {bookingType === "single" ? (<>
+                  <h3 className="mt-4 mb-4"><small className="text-danger">*</small>請選擇時間</h3>
+                  <div className="row g-4">
+                    <div className="col-lg-6 d-flex justify-content-center">
+                      <Calendar
+                        onChange={setSelectedDate}
+                        value={selectedDate}
+                        minDate={minDate}
+                        maxDate={maxDate} />
                     </div>
-                  </div>
-                </div>
-              </>) : (<>
-                <h3 className="mt-4 mb-4"><small className="text-danger">*</small>請選擇日期區間</h3>
-                <div className="row g-4">
-                  <div className="col-lg-6">
-                    <div className="w-50 mx-auto mb-4">
-                      <label htmlFor="weekDay" className="form-label">星期</label>
-                      <select
-                        className={`form-select ${errors["weekDay"] && 'is-invalid'} `}
-                        id="weekDay"
-                        name="weekDay"
-                        {...register("weekDay", {
-                          required: {
-                            value: true,
-                            message: '請選擇星期幾',
-                          }
-                        })}>
-                        {errors["weekDay"] && (
-                          <div className="invalid-feedback">{errors?.["weekDay"]?.message}</div>
-                        )}
-                        <option value="" disabled hidden>請選擇星期幾</option>
-                        {weekdays.map((weekday) => {
+                    <div className="col-lg-6">
+                      {weekdayString === '星期一' ? (
+                        <h4 className="mt-4">週一為本堂休假日，<br />若有借用需求請洽行政同工或本堂長老</h4>
+                      ) : (<>
+                        <h5 className="mb-4"><small className="text-danger">*</small>請選擇開始時間與結束時間</h5>
+                        <div className="d-flex">
+                          <div className="input-group mb-3 me-3 me-md-9">
+                            <span className="input-group-text">開始</span>
+                            <input type="text" className="form-control" value={startTime || ''} readOnly />
+                            <span className="input-group-text">結束</span>
+                            <input type="text" className="form-control" value={endTime || ''} readOnly />
+                          </div>
+                          <button type="button" className="btn btn-primary mb-3 me-3 ms-auto text-nowrap py-2 px-4 d-none d-md-block" onClick={removeSelectTime}>清除重選</button>
+                        </div>
+                        {filteredTimes.map((time) => {
+                          const currentIndex = times.indexOf(time);
+                          const startIndex = times.indexOf(startTime);
+                          const endIndex = times.indexOf(endTime);
+                          const isSelected =
+                            (startTime && !endTime && currentIndex === startIndex) ||
+                            (startTime && endTime && currentIndex >= startIndex && currentIndex <= endIndex);
                           return (
-                            <option value={weekday} key={weekday}>{weekday}</option>
+                            <button
+                              type="button"
+                              className={`btn me-2 mb-2 ${isSelected ? "btn-primary" : "btn-outline-primary"}`}
+                              key={time}
+                              onClick={() => handleSelectTime(time)}>
+                              {time}
+                            </button>
                           )
                         })}
-                      </select>
-                    </div>
-                    <div className="w-50 mx-auto">
-                      <label htmlFor="weekDay" className="form-label">開始日期</label>
-                      <input
-                        type="date"
-                        className={`form-control ${errors["dateFrom"] && 'is-invalid'}`}
-                        id="dateFrom"
-                        name="dateFrom"
-                        {...register("dateFrom", { required: "請選擇開始日期" })} />
-                      {errors["dateFrom"] && (
-                        <div className="invalid-feedback">{errors?.["dateFrom"]?.message}</div>
+                      </>
                       )}
-                    </div>
-                    <div className="w-50 mx-auto">
-                      <label htmlFor="weekDay" className="form-label">結束日期</label>
-                      <input
-                        type="date"
-                        className={`form-control ${errors["dateTo"] && 'is-invalid'}`}
-                        id="dateTo"
-                        name="dateTo"
-                        {...register("dateTo", { required: "請選擇結束日期" })} />
-                      {errors["dateTo"] && (
-                        <div className="invalid-feedback">{errors?.["dateTo"]?.message}</div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="col-lg-6">
-                    {watch("weekDay") === '星期一' ? (
-                      <h4 className="mt-4">週一為本堂休假日，<br />若有借用需求請洽行政同工或本堂長老</h4>
-                    ) : (<>
-                      <h5 className="mb-4"><small className="text-danger">*</small>請選擇開始時間與結束時間</h5>
-                      <div className="d-flex">
-                        <div className="input-group mb-3 me-3 me-md-9">
-                          <span className="input-group-text">開始</span>
-                          <input type="text" className="form-control" value={startTime || ''} readOnly />
-                          <span className="input-group-text">結束</span>
-                          <input type="text" className="form-control" value={endTime || ''} readOnly />
-                        </div>
-                        <button type="button" className="btn btn-primary mb-3 me-3 ms-auto text-nowrap py-2 px-4 d-none d-md-block" onClick={removeSelectTime}>清除重選</button>
+                      <div className="d-flex justify-content-end d-md-none">
+                        <button type="button" className="btn btn-primary mb-3 me-3 text-nowrap py-2 px-4" onClick={removeSelectTime}>清除重選</button>
                       </div>
-                      {filteredTimes.map((time) => {
-                        const currentIndex = times.indexOf(time);
-                        const startIndex = times.indexOf(startTime);
-                        const endIndex = times.indexOf(endTime);
-                        const isSelected =
-                          (startTime && !endTime && currentIndex === startIndex) ||
-                          (startTime && endTime && currentIndex >= startIndex && currentIndex <= endIndex);
-                        return (
-                          <button
-                            type="button"
-                            className={`btn me-2 mb-2 ${isSelected ? "btn-primary" : "btn-outline-primary"}`}
-                            key={time}
-                            onClick={() => handleSelectTime(time)}>
-                            {time}
-                          </button>
-                        )
-                      })}
-                    </>
-                    )}
-                    <div className="d-flex justify-content-end d-md-none">
-                      <button type="button" className="btn btn-primary mb-3 me-3 text-nowrap py-2 px-4" onClick={removeSelectTime}>清除重選</button>
                     </div>
                   </div>
-                </div>
-              </>)
+                </>) : (<>
+                  <h3 className="mt-4 mb-4"><small className="text-danger">*</small>請選擇日期區間</h3>
+                  <div className="row g-4">
+                    <div className="col-lg-6">
+                      <div className="row">
+                        <div className="col-lg-7 col-9 mx-auto mb-5">
+                          <label htmlFor="weekDay" className="form-label">星期</label>
+                          <select
+                            className={`form-select ${errors["weekDay"] && 'is-invalid'} `}
+                            id="weekDay"
+                            name="weekDay"
+                            {...register("weekDay", {
+                              required: {
+                                value: true,
+                                message: '請選擇星期幾',
+                              }
+                            })}>
+                            {errors["weekDay"] && (
+                              <div className="invalid-feedback">{errors?.["weekDay"]?.message}</div>
+                            )}
+                            <option value="" disabled hidden>請選擇星期幾</option>
+                            {weekdays.map((weekday) => {
+                              return (
+                                <option value={weekday} key={weekday}>{weekday}</option>
+                              )
+                            })}
+                          </select>
+                        </div>
+                        <div className="col-lg-7 col-9 mx-auto mb-2">
+                          <label htmlFor="weekDay" className="form-label">開始日期</label>
+                          <input
+                            type="date"
+                            className={`form-control ${errors["dateFrom"] && 'is-invalid'}`}
+                            id="dateFrom"
+                            name="dateFrom"
+                            {...register("dateFrom", { required: "請選擇開始日期" })} />
+                          {errors["dateFrom"] && (
+                            <div className="invalid-feedback">{errors?.["dateFrom"]?.message}</div>
+                          )}
+                        </div>
+                        <div className="col-lg-7 col-9 mx-auto">
+                          <label htmlFor="weekDay" className="form-label">結束日期</label>
+                          <input
+                            type="date"
+                            className={`form-control ${errors["dateTo"] && 'is-invalid'}`}
+                            id="dateTo"
+                            name="dateTo"
+                            {...register("dateTo", { required: "請選擇結束日期" })} />
+                          {errors["dateTo"] && (
+                            <div className="invalid-feedback">{errors?.["dateTo"]?.message}</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-lg-6">
+                      {watch("weekDay") === '星期一' ? (
+                        <h4 className="mt-4">週一為本堂休假日，<br />若有借用需求請洽行政同工或本堂長老</h4>
+                      ) : (<>
+                        <h5 className="mb-4"><small className="text-danger">*</small>請選擇開始時間與結束時間</h5>
+                        <div className="d-flex">
+                          <div className="input-group mb-3 me-3 me-md-9">
+                            <span className="input-group-text">開始</span>
+                            <input type="text" className="form-control" value={startTime || ''} readOnly />
+                            <span className="input-group-text">結束</span>
+                            <input type="text" className="form-control" value={endTime || ''} readOnly />
+                          </div>
+                          <button type="button" className="btn btn-primary mb-3 me-3 ms-auto text-nowrap py-2 px-4 d-none d-md-block" onClick={removeSelectTime}>清除重選</button>
+                        </div>
+                        {filteredTimes.map((time) => {
+                          const currentIndex = times.indexOf(time);
+                          const startIndex = times.indexOf(startTime);
+                          const endIndex = times.indexOf(endTime);
+                          const isSelected =
+                            (startTime && !endTime && currentIndex === startIndex) ||
+                            (startTime && endTime && currentIndex >= startIndex && currentIndex <= endIndex);
+                          return (
+                            <button
+                              type="button"
+                              className={`btn me-2 mb-2 ${isSelected ? "btn-primary" : "btn-outline-primary"}`}
+                              key={time}
+                              onClick={() => handleSelectTime(time)}>
+                              {time}
+                            </button>
+                          )
+                        })}
+                      </>
+                      )}
+                      <div className="d-flex justify-content-end d-md-none">
+                        <button type="button" className="btn btn-primary mb-3 me-3 text-nowrap py-2 px-4" onClick={removeSelectTime}>清除重選</button>
+                      </div>
+                    </div>
+                  </div>
+                </>)}
+              </div>
             )}
           </section>
           {/* 場地 */}
