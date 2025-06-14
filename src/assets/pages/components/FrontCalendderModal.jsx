@@ -98,8 +98,6 @@ function FrontCalenderModal({ modalRef, calendarRef }) {
                             buttonText={{
                                 today: '今天',
                                 dayGridMonth: '月',
-                                prev: '上個月',
-                                next: '下個月',
                             }}
                             headerToolbar={{
                                 left: 'prev,next today',
