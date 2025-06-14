@@ -12,3 +12,12 @@
     }
 }
 
+.btnL{
+    background: $contrast;
+    color: white;
+    &.active,
+    &:hover {
+        background-color: $contrast-deep;
+        color: $contrast-light;
+    }
+}

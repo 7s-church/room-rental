@@ -241,15 +241,6 @@ function EditEventModal({ modalRef, selectedEvent, setSelectedEvent, modalMode, 
         }
 
     }
-    // 預約衝突
-    const checkBookingConflict = () => {
-        const { date, location, times } = selectedEvent;
-
-        if (!bookingList[date] || !bookingList[date][location]) return false;
-
-        const bookedTimes = bookingList[date][location];
-        return times.some(time => bookedTimes.includes(time));
-    };
 
     return (
         <div className="modal" tabIndex="-1" ref={editEventRef} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>

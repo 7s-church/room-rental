@@ -79,17 +79,6 @@ function FullYearBooking({ modalRef, selectedEvent, setSelectedEvent, getBooking
                 });
             }
         }
-
-        console.log("準備 payload", {
-            dateFrom,
-            dateTo,
-            weekDay,
-            targetWeekday,
-            allDays: [...Array(7).keys()].map(i => ({
-                day: i,
-                label: weekdays[i]
-            }))
-        });
         return payload
     }
 
@@ -192,6 +181,7 @@ function FullYearBooking({ modalRef, selectedEvent, setSelectedEvent, getBooking
                 ...prev,
                 weekDay: value,
                 dateFrom: nextDateStr,
+                dateTo:nextDateStr,
             }));
         } else {
             setSelectedEvent((prev) => ({
@@ -292,7 +282,7 @@ function FullYearBooking({ modalRef, selectedEvent, setSelectedEvent, getBooking
                                         className="form-control"
                                         id="dateTo"
                                         name="dateTo"
-                                        value={selectedEvent.dateTo || '2025-12-31'}
+                                        value={selectedEvent.dateTo || today}
                                         onChange={getinputValue} />
                                 </div>
                                 <div className="col-md-6">

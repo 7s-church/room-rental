@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom"
 import Navbar from "./layout/Navbar"
+import Toast from "./layout/Toast"
 
 function Successed() {
     return (
@@ -9,7 +10,9 @@ function Successed() {
             <h3 className="text-primary mb-4">成功送出申請</h3>
             <Link to="/">回到場地登記表</Link>
         </div>
-    </div>)
+        <Toast />
+    </div>
+    )
 }
 
 export default Successed

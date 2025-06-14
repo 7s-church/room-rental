@@ -305,7 +305,10 @@ $primary-100:   #FFFF99; //custom
 $primary-200:   #FCBA63; //custom
 $primary-300:   #D96600; //custom
 $primary-400:   #B93421; //custom
-$secondary:     #212529;//$gray-600 !default;
+$secondary:     #212529; //$gray-600 !default;
+$contrast:      #006D77; //custom
+$contrast-light:#b5cecd; //custom
+$contrast-deep: #003F47; //custom
 $success:       $green !default;
 $info:          $cyan !default;
 $warning:       $yellow !default;
@@ -496,7 +499,7 @@ $icon-link-icon-transform:    translate3d(.25em, 0, 0) !default;
 //
 // Style p element.
 
-$paragraph-margin-bottom:   1rem !default;
+$paragraph-margin-bottom:   0; //1rem !default;custom
 
 
 // Grid breakpoints

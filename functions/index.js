@@ -36,23 +36,40 @@ const authenticate = async (req, res, next) => {
     }
 };
 // 預約衝突
+const parseTime = (timeStr) => {
+    const [h, m] = timeStr.split(':').map(Number);
+    return h * 60 + m;
+};
+
 const checkTimeConflict = async ({ date, location, times, excludeId = null }) => {
+    if (!Array.isArray(times) || times.length < 2) return false;
+
     const snapshot = await db.collection("bookings")
         .where("date", "==", date)
         .where("location", "==", location)
         .get();
 
+    const sorted = [...times].sort();
+    const startTime = parseTime(sorted[0]);
+    const endTime = parseTime(sorted[sorted.length - 1]); // ⚠️ 不加30分鐘
+
     for (const doc of snapshot.docs) {
         if (excludeId && doc.id === excludeId) continue;
 
-        const existingTimes = doc.data().times;
-        const hasOverlap = existingTimes.some(time => times.includes(time));
-        if (hasOverlap) return true;
+        const existingTimes = doc.data().times || [];
+        if (existingTimes.length < 2) continue;
+
+        const existSorted = [...existingTimes].sort();
+        const existStart = parseTime(existSorted[0]);
+        const existEnd = parseTime(existSorted[existSorted.length - 1]);
+
+        // ✅ 完整不重疊：其中一段在另一段完全結束之後
+        const noOverlap = endTime <= existStart || startTime >= existEnd;
+        if (!noOverlap) return true; // 有交集就衝突
     }
 
     return false;
 };
-
 app.post("/addBooking", async (req, res) => {
     const data = req.body;
 

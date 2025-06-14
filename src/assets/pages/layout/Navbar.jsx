@@ -9,14 +9,16 @@ import { createAsyncMessage } from "../../redux/slice/toastSlice";
 
 function Navbar({ isAdminPage }) {
     const modalRef = useRef(null);
-    const navigate = useNavigate()
+    const settingRef= useRef(null)
+    const navigate = useNavigate();
+    const dispatch = useDispatch()
 
     const openRef = () => {
         modalRef.current.show();
     }
 
     const opensettingModal = () => {
-        modalRef.current.show();
+        settingRef.current.show();
     }
 
 
@@ -60,7 +62,7 @@ function Navbar({ isAdminPage }) {
                 </>
                 ) : (
                     <>
-                        <button type="button" className="btn btn-outline-primary me-md-4 me-2" onClick={openRef}>長期借用表單</button>
+                        <button type="button" className="btn btn-outline-primary me-md-4 me-2">行事曆</button>
                         <Link to='/adminlogin'>
                             <button type="button" data-bs-toggle="tooltip" data-bs-placement="管理者登入" className="btn">
                                 <span className="material-symbols-outlined me-md-4 me-2 align-middle" style={{ fontSize: "32px" }}>account_circle</span>
@@ -71,7 +73,7 @@ function Navbar({ isAdminPage }) {
             </div>
         </nav >
         <LongTurnModal modalRef={modalRef} />
-        <AdminSettingModal modalRef={modalRef} />
+        <AdminSettingModal modalRef={settingRef} />
     </>
     )
 }

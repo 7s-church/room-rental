@@ -11,7 +11,7 @@
 /* 調整資源欄標題樣式 */
 .fc .fc-resourceTimelineMonth-view .fc-col-header-cell-cushion {
   font-weight: bold;
-  color: #4D0000;
+  color: white;
 }
 
 /* 調整時間軸格子底色 */
@@ -48,7 +48,11 @@
 }
 
 .fc-daygrid-event {
-  font-size: 14px;
+  font-size: 10px;
+}
+
+.fc .fc-daygrid-day-top {
+  background-color: $contrast-light;
 }
 
 @media print {
@@ -61,4 +65,26 @@
   .btn {
     display: none;
   }
+}
+
+.fc .fc-button-primary {
+  background-color: $contrast;
+  border: 1px solid $contrast;
+
+  &:active,
+  &:hover,
+  &:focus {
+    background-color: $contrast-deep;
+  }
+
+  &:disabled {
+    background-color: $contrast-light;
+    color: $contrast;
+    border: 1px solid $contrast-light;
+  }
+}
+
+.fc-col-header-cell {
+  background-color: $contrast-deep;
+  color: white;
 }
