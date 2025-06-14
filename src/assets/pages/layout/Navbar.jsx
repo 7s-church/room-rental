@@ -1,5 +1,5 @@
 import { useRef } from "react"
-import LongTurnModal from "../components/LongTurnModal";
+import FrontCalenderModal from "../components/FrontCalendderModal";
 import AdminSettingModal from "../components/AdminSettingModal"
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import { Link, useNavigate } from "react-router-dom";
@@ -9,12 +9,16 @@ import { createAsyncMessage } from "../../redux/slice/toastSlice";
 
 function Navbar({ isAdminPage }) {
     const modalRef = useRef(null);
-    const settingRef= useRef(null)
+    const settingRef = useRef(null)
     const navigate = useNavigate();
-    const dispatch = useDispatch()
+    const dispatch = useDispatch();
+    const calendarRef = useRef(null);
 
     const openRef = () => {
         modalRef.current.show();
+        setTimeout(() => {
+            calendarRef.current?.getApi()?.updateSize();
+        }, 200);
     }
 
     const opensettingModal = () => {
@@ -62,7 +66,7 @@ function Navbar({ isAdminPage }) {
                 </>
                 ) : (
                     <>
-                        <button type="button" className="btn btn-outline-primary me-md-4 me-2">行事曆</button>
+                        <button type="button" className="btn btn-outline-primary me-md-4 me-2" onClick={openRef}>行事曆</button>
                         <Link to='/adminlogin'>
                             <button type="button" data-bs-toggle="tooltip" data-bs-placement="管理者登入" className="btn">
                                 <span className="material-symbols-outlined me-md-4 me-2 align-middle" style={{ fontSize: "32px" }}>account_circle</span>
@@ -72,7 +76,7 @@ function Navbar({ isAdminPage }) {
                 )}
             </div>
         </nav >
-        <LongTurnModal modalRef={modalRef} />
+        <FrontCalenderModal modalRef={modalRef} calendarRef={calendarRef}/>
         <AdminSettingModal modalRef={settingRef} />
     </>
     )

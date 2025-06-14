@@ -2,6 +2,10 @@
   cursor: pointer;
 }
 
+.front-calendar-modal .fc-event {
+  cursor: default;
+}
+
 /* 只針對 resourceTimelineMonth 這個月視圖調整背景色、字體大小等 */
 .fc .fc-resourceTimelineMonth-view {
   background-color: #f9f9f9;

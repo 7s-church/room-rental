@@ -42,6 +42,10 @@ function App() {
   const thisYear = new Date().getFullYear();
   const minDate = new Date(thisYear, 0, 1);
   const maxDate = allowNextYear ? (new Date(thisYear + 1, 11, 31)) : (new Date(thisYear, 11, 31))
+  const minDateStr = new Date(thisYear, 0, 1).toISOString().split('T')[0];
+  const maxDateStr = allowNextYear
+    ? new Date(thisYear + 1, 11, 31).toISOString().split('T')[0]
+    : new Date(thisYear, 11, 31).toISOString().split('T')[0];
   const today = new Date().toISOString().split('T')[0];
 
   const roomNameList = ["7樓會議室", "601餐廳", "603教室", "503教室", "505會議室", "506圖書室",
@@ -84,6 +88,7 @@ function App() {
     reset,
     watch,
     setValue,
+    getValues,
     formState: { errors },
   } = useForm({
     mode: 'onTouched',
@@ -393,9 +398,7 @@ function App() {
 
   useEffect(() => {
     if (alertRef.current) {
-      modalRef.current = new Modal(alertRef.current, {
-        backdrop: false,
-      });
+      modalRef.current = new Modal(alertRef.current);
       alertRef.current.addEventListener("shown.bs.modal", () => {
         alertRef.current.querySelector(".btn-close")?.focus();
       });
@@ -539,24 +542,39 @@ function App() {
                         </div>
                         <div className="col-lg-7 col-9 mx-auto mb-2">
                           <label htmlFor="weekDay" className="form-label">開始日期</label>
-                          <input
-                            type="date"
-                            className={`form-control ${errors["dateFrom"] && 'is-invalid'}`}
-                            id="dateFrom"
-                            name="dateFrom"
-                            {...register("dateFrom", { required: "請選擇開始日期" })} />
+                          {typeof allowNextYear !== 'undefined' && (
+                            <input
+                              type="date"
+                              className={`form-control ${errors["dateFrom"] && 'is-invalid'}`}
+                              id="dateFrom"
+                              name="dateFrom"
+                              min={minDateStr}
+                              max={maxDateStr}
+                              {...register("dateFrom", { required: "請選擇開始日期" })} />
+                          )}
                           {errors["dateFrom"] && (
                             <div className="invalid-feedback">{errors?.["dateFrom"]?.message}</div>
                           )}
                         </div>
                         <div className="col-lg-7 col-9 mx-auto">
                           <label htmlFor="weekDay" className="form-label">結束日期</label>
-                          <input
-                            type="date"
-                            className={`form-control ${errors["dateTo"] && 'is-invalid'}`}
-                            id="dateTo"
-                            name="dateTo"
-                            {...register("dateTo", { required: "請選擇結束日期" })} />
+                          {typeof allowNextYear !== 'undefined' && (
+                            <input
+                              type="date"
+                              className={`form-control ${errors["dateTo"] && 'is-invalid'}`}
+                              id="dateTo"
+                              name="dateTo"
+                              min={minDateStr}
+                              max={maxDateStr}
+                              {...register("dateTo", {
+                                required: "請選擇結束日期",
+                                validate: (value) => {
+                                  const dateFrom = getValues("dateFrom");
+                                  if (!dateFrom) return true;
+                                  return new Date(value) >= new Date(dateFrom) || "結束日期不能早於開始日期";
+                                }
+                              })} />
+                          )}
                           {errors["dateTo"] && (
                             <div className="invalid-feedback">{errors?.["dateTo"]?.message}</div>
                           )}
