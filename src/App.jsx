@@ -328,6 +328,12 @@ function App() {
 
   const selectItem = (value) => {
     setSelectRoom(value)
+    setSelectTag('')
+  }
+
+  const selectBytag = (tag) =>{
+    setSelectTag(tag);
+    setSelectRoom('')
   }
 
   const tags = [...new Set(roomList.flatMap(tag => tag.fields?.tag?.arrayValue?.values.map(tag => tag.stringValue?.trim())
@@ -664,7 +670,7 @@ function App() {
                     {tags.map((tag) => {
                       return (
                         <SwiperSlide key={tag}>
-                          <button type="button" className={`btn mb-4 fs-7 text-white ${selectTag === tag ? "btn-primary-400" : "btn-primary-300"}`} onClick={() => setSelectTag(tag)}>{tag}</button>
+                          <button type="button" className={`btn mb-4 fs-7 text-white ${selectTag === tag ? "btn-primary-400" : "btn-primary-300"}`} onClick={()=>selectBytag(tag)}>{tag}</button>
                         </SwiperSlide>
                       )
                     })}
@@ -675,7 +681,7 @@ function App() {
                   <div>
                     {tags.map((tag) => {
                       return (
-                        <button type="button" className={`btn rounded rounded-pill me-2 mb-2 text-white ${selectTag === tag ? "btn-primary-400 " : "btn-primary-300"}`} key={tag} onClick={() => setSelectTag(tag)}>{tag}</button>
+                        <button type="button" className={`btn rounded rounded-pill me-2 mb-2 text-white ${selectTag === tag ? "btn-primary-400 " : "btn-primary-300"}`} key={tag} onClick={()=>selectBytag(tag)}>{tag}</button>
                       )
                     })}
                   </div>
