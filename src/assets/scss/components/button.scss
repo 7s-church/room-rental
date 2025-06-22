@@ -12,12 +12,23 @@
     }
 }
 
-.btnL{
+.btnL {
     background: $contrast;
     color: white;
+
     &.active,
     &:hover {
         background-color: $contrast-deep;
         color: $contrast-light;
+    }
+}
+
+.btn-tag {
+    background: $primary-300;
+    color: white;
+
+    &.active,
+    &:hover {
+        background-color: $primary-400;
     }
 }

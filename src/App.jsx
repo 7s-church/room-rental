@@ -664,7 +664,7 @@ function App() {
                     {tags.map((tag) => {
                       return (
                         <SwiperSlide key={tag}>
-                          <button type="button" className="btn btn-primary-300 text-white mb-4 fs-7" onClick={() => setSelectTag(tag)}>{tag}</button>
+                          <button type="button" className={`btn mb-4 fs-7 text-white ${selectTag === tag ? "btn-primary-400" : "btn-primary-300"}`} onClick={() => setSelectTag(tag)}>{tag}</button>
                         </SwiperSlide>
                       )
                     })}
@@ -675,7 +675,7 @@ function App() {
                   <div>
                     {tags.map((tag) => {
                       return (
-                        <button type="button" className="btn btn-primary-300 rounded rounded-pill text-white me-2 mb-2" key={tag} onClick={() => setSelectTag(tag)}>{tag}</button>
+                        <button type="button" className={`btn rounded rounded-pill me-2 mb-2 text-white ${selectTag === tag ? "btn-primary-400 " : "btn-primary-300"}`} key={tag} onClick={() => setSelectTag(tag)}>{tag}</button>
                       )
                     })}
                   </div>
@@ -695,14 +695,18 @@ function App() {
                           <div className="d-flex flex-wrap">
                             {room.fields?.tag?.arrayValue?.values
                               ?.filter(tag => tag.stringValue?.trim())
-                              .map(tag => (
-                                <button
-                                  type="button"
-                                  className="btn rounded rounded-pill btn-primary-300 text-white fs-7 me-2 py-1 text-nowrap mb-2"
-                                  key={tag.stringValue}>
-                                  {tag.stringValue}
-                                </button>
-                              ))}
+                              .map(tag => {
+                                const tagValue = tag.stringValue;
+                                const isSelected = selectTag === tagValue;
+                                return (
+                                  <button
+                                    type="button"
+                                    className={`btn rounded rounded-pill text-white fs-7 me-2 py-1 text-nowrap mb-2 ${isSelected ? "btn-primary-400 " : "btn-primary-300"}`}
+                                    key={tagValue}>
+                                    {tagValue}
+                                  </button>
+                                )
+                              })}
                           </div>
                         </div>)
                     }))}
